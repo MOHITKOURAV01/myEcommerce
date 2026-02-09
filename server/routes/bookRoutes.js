@@ -1,10 +1,8 @@
 const express = require('express');
 const router = express.Router();
+const { getBooks } = require('../controllers/bookController');
 
 // @route   GET /api/books
-// @desc    Test route
-router.get('/', (req, res) => {
-    res.json({ message: "Books API working" });
-});
+router.get('/', getBooks);
 
 module.exports = router;
