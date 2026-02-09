@@ -15,6 +15,11 @@ app.get('/', (req, res) => {
     res.send('BookSmart API is running');
 });
 
+// Health Check
+app.get('/health', (req, res) => {
+    res.status(200).json({ status: "OK", service: "BookSmart API" });
+});
+
 // Routes
 app.use('/api/books', require('./routes/bookRoutes'));
 
