@@ -63,7 +63,7 @@ const getBookById = async (req, res) => {
 
         res.json(book);
     } catch (error) {
-        res.status(500).json({ message: "Invalid Book ID" });
+        res.status(500).json({ message: error.message });
     }
 };
 
@@ -83,7 +83,7 @@ const updateBook = async (req, res) => {
 
         res.json(book);
     } catch (error) {
-        res.status(500).json({ message: "Invalid Book ID" });
+        res.status(500).json({ message: error.message });
     }
 };
 
