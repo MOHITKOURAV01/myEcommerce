@@ -51,8 +51,25 @@ const getBookById = async (req, res) => {
     }
 };
 
+// @desc    Update book
+// @route   PUT /api/books/:id
+const updateBook = async (req, res) => {
+    try {
+        const book = await Book.findByIdAndUpdate(req.params.id, req.body, { new: true });
+
+        if (!book) {
+            return res.status(404).json({ message: "Book not found" });
+        }
+
+        res.json(book);
+    } catch (error) {
+        res.status(500).json({ message: "Invalid Book ID" });
+    }
+};
+
 module.exports = {
     getBooks,
     createBook,
     getBookById,
+    updateBook,
 };
