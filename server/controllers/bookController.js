@@ -4,7 +4,21 @@ const Book = require('../models/Book');
 
 const getBooks = async (req, res) => {
     try {
-        res.json({ message: "Books API working" });
+        const { language, mood, problem } = req.query;
+        let query = {};
+
+        if (language) {
+            query.language = language;
+        }
+        if (mood) {
+            query.moods = mood;
+        }
+        if (problem) {
+            query.problems = problem;
+        }
+
+        const books = await Book.find(query);
+        res.json(books);
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
