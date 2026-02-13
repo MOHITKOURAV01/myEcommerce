@@ -28,10 +28,10 @@ const getBooks = async (req, res) => {
 // @route   POST /api/books
 const createBook = async (req, res) => {
     try {
-        const { title, author, language, description, buyLinks } = req.body;
+        const { title, author, language, description, buyLinks, moods, problems } = req.body;
 
-        if (!title || !author) {
-            return res.status(400).json({ message: "Title and Author are required" });
+        if (!title || !author || !language) {
+            return res.status(400).json({ message: "Title, Author, and Language are required" });
         }
 
         const book = new Book({
@@ -39,7 +39,9 @@ const createBook = async (req, res) => {
             author,
             language,
             description,
-            buyLinks
+            buyLinks,
+            moods,
+            problems
         });
 
         const createdBook = await book.save();
@@ -69,6 +71,10 @@ const getBookById = async (req, res) => {
 // @route   PUT /api/books/:id
 const updateBook = async (req, res) => {
     try {
+        if (Object.keys(req.body).length === 0) {
+            return res.status(400).json({ message: "Request body cannot be empty" });
+        }
+
         const book = await Book.findByIdAndUpdate(req.params.id, req.body, { new: true });
 
         if (!book) {
