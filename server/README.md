@@ -15,6 +15,17 @@ This backend follows MVC architecture and is designed for scalability and future
 5. Start development: `npm run dev` or `npm start`
 
 ## API Endpoints
+
+### General
 - `GET /`: API Status
 - `GET /health`: Health Check
-- `GET /api/books`: Book Routes
+
+### Books
+- `GET /api/books`: Get all books
+  - **Filtering**: `?language=English`, `?mood=Motivation`, `?problem=Stress`
+- `POST /api/books`: Create a new book
+  - **Body**: `{ title, author, language, description, moods, problems, buyLinks }`
+- `GET /api/books/:id`: Get a single book by ID
+- `PUT /api/books/:id`: Update a book
+- `DELETE /api/books/:id`: Delete a book
+- `POST /api/books/seed`: Populate database with sample data
