@@ -1,12 +1,15 @@
 const express = require('express');
 const router = express.Router();
-const { getBooks, createBook, getBookById, updateBook, deleteBook } = require('../controllers/bookController');
+const { getBooks, createBook, getBookById, updateBook, deleteBook, seedBooks } = require('../controllers/bookController');
 
 // @route   GET /api/books
 router.get('/', getBooks);
 
 // @route   POST /api/books
 router.post('/', createBook);
+
+// @route   POST /api/books/seed
+router.post('/seed', seedBooks);
 
 // @route   GET /api/books/:id
 router.get('/:id', getBookById);
