@@ -5,7 +5,7 @@
 
 ---
 
-## About the Project :
+## About the Project :-
 
 **BookSmart** is a smart book discovery platform designed to help users choose the *right book for their life situation*, instead of browsing endless categories or best-seller lists.
 
@@ -20,9 +20,9 @@ The platform acts as a **decision-support system for readers**, not a book-selli
 
 ---
 
-## Problem Statement
+## Problem Statement:-
 
-Current book platforms:
+Current book platforms
 
 * Recommend books only by category (Fiction, Biography, Self-Help)
 * Overwhelm users with thousands of options
