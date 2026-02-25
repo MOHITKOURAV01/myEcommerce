@@ -113,17 +113,16 @@ http://localhost:5000
 
 ### 3. Frontend Setup
 
-```
+```bash
 cd client
 npm install
 npm start
 ```
 
-Frontend will run on:
-
-```
-http://localhost:3000
-```
+Mention:
+- Backend runs on port 5000
+- Frontend runs on port 3000
+- MongoDB Atlas connection required in `server/.env`
 
 ---
 
