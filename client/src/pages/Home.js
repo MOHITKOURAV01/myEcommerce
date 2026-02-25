@@ -61,7 +61,7 @@ function Home() {
                 {error && <div className="error-message">{error}</div>}
 
                 {!loading && !error && books.length === 0 && (
-                    <div className="empty-message">No books found matching your criteria.</div>
+                    <p className="empty-message">No books found for selected filters.</p>
                 )}
 
                 {!loading && !error && books.length > 0 && (
