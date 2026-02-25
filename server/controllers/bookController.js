@@ -17,8 +17,20 @@ const getBooks = async (req, res) => {
             query.problems = problem;
         }
 
-        const books = await Book.find(query);
-        res.json(books);
+        const page = parseInt(req.query.page, 10) || 1;
+        const limit = parseInt(req.query.limit, 10) || 10;
+        const skip = (page - 1) * limit;
+
+        const total = await Book.countDocuments(query);
+        const books = await Book.find(query).skip(skip).limit(limit);
+
+        res.json({
+            success: true,
+            count: books.length,
+            page,
+            totalPages: Math.ceil(total / limit),
+            data: books
+        });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
