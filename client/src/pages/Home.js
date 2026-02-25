@@ -35,7 +35,7 @@ function Home() {
             setTotalPages(response.data.data.totalPages || 1);
         } catch (err) {
             console.error("Error fetching books:", err);
-            setError("Failed to fetch books. Please check if the server is running.");
+            setError("Something went wrong. Please try again.");
         } finally {
             setLoading(false);
         }
@@ -58,7 +58,7 @@ function Home() {
             <main className="home-main">
                 <FilterBar filters={filters} setFilters={setFilters} />
 
-                {error && <div className="error-message">{error}</div>}
+                {error && <p className="error-message">{error}</p>}
 
                 {!loading && !error && books.length === 0 && (
                     <p className="empty-message">No books found for selected filters.</p>
