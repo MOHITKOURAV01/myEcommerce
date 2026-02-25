@@ -51,7 +51,6 @@ function Home() {
     return (
         <div className="home-container">
             <header className="home-header">
-                <h1>ShopSmart</h1>
                 <p>Find your next great read.</p>
             </header>
 
