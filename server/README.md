@@ -20,7 +20,7 @@ This backend follows MVC architecture and is designed for scalability and future
 4. Set up your `.env` file:
    - Copy `.env.example` to `.env`
    - Replace `your_mongodb_connection_string` with your MongoDB Atlas connection string
-   - Example: `MONGO_URI=mongodb+srv://username:password@cluster.mongodb.net/booksmart`
+   - Example: `MONGO_URI=mongodb+srv://<db_username>:<db_password>@cluster.mongodb.net/booksmart`
 5. Start development: `npm run dev` or `npm start`
 
 ### MongoDB Atlas Setup
