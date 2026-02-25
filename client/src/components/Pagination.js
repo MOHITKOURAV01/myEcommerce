@@ -29,7 +29,7 @@ function Pagination({ currentPage, totalPages, setCurrentPage }) {
             <button
                 className="page-btn"
                 onClick={handleNext}
-                disabled={currentPage === totalPages}
+                disabled={currentPage >= totalPages || totalPages === 0}
             >
                 Next
             </button>

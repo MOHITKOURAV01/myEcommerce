@@ -31,8 +31,16 @@ function Home() {
                 }
             });
 
-            setBooks(response.data.data.books || []);
-            setTotalPages(response.data.data.totalPages || 1);
+            const resData = response.data;
+
+            // Support Option B (Simple Array) or Option A (Structured Response)
+            if (Array.isArray(resData)) {
+                setBooks(resData);
+                setTotalPages(1);
+            } else {
+                setBooks(resData.data?.books || resData.books || []);
+                setTotalPages(resData.data?.totalPages || resData.totalPages || 1);
+            }
         } catch (err) {
             console.error("Error fetching books:", err);
             setError("Something went wrong. Please try again.");
