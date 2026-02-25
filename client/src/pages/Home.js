@@ -46,6 +46,8 @@ function Home() {
         setCurrentPage(1);
     }, [filters]);
 
+    if (loading) return <p>Loading books...</p>;
+
     return (
         <div className="home-container">
             <header className="home-header">
@@ -56,7 +58,6 @@ function Home() {
             <main className="home-main">
                 <FilterBar filters={filters} setFilters={setFilters} />
 
-                {loading && <div className="loading-message">Loading books...</div>}
                 {error && <div className="error-message">{error}</div>}
 
                 {!loading && !error && books.length === 0 && (
