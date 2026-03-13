@@ -20,13 +20,14 @@ app.get('/health', (req, res) => {
     res.status(200).json({ status: "OK", service: "BookSmart API" });
 });
 
-const errorMiddleware = require('./middleware/errorMiddleware');
+const { errorHandler, notFound } = require('./middleware/errorMiddleware');
 
 // Routes
 app.use('/api/books', require('./routes/bookRoutes'));
 
 // Error Middleware
-app.use(errorMiddleware);
+app.use(notFound);
+app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;
 
