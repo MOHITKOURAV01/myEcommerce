@@ -1,7 +1,7 @@
 # BookSmart – Smart Book Discovery Platform :-
 
 > **ShopSmart Project**
-> MERN Stack (React.js, Node.js, MongoDB)
+> MERN Stack (React.js, Node.js, MongoDB)...
 
 ---
 
