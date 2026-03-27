@@ -1,153 +1,377 @@
-import { useEffect } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import gsap from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { useNavigate } from 'react-router-dom';
-import { BOOKS_DATA } from '../data/books';
-import BookCard from '../components/BookCard';
+import useBooks from '../hooks/useBooks';
+import FloatingBooks from '../three/FloatingBooks';
+import BookCard3D from '../components/BookCard3D';
+import SignboardCard from '../components/SignboardCard';
+import ShopDoor from '../components/ShopDoor';
+import LoadingSpinner from '../components/LoadingSpinner';
 
-const Home = ({ setModalBook }) => {
+gsap.registerPlugin(ScrollTrigger);
+
+const MOODS = [
+  { id: 'focus', name: 'Deep Focus', desc: 'Books for work & study', count: 12, theme: 'terra' },
+  { id: 'calm', name: 'Calm Mind', desc: 'Peace & mindfulness', count: 8, theme: 'mint' },
+  { id: 'growth', name: 'Growth', desc: 'Self improvement & career', count: 15, theme: 'gold' },
+  { id: 'stories', name: 'Stories', desc: 'Escape into another world', count: 20, theme: 'purple' },
+];
+
+const PROBLEMS = [
+  "Stress", "Career", "Focus", "Finance", "Communication", "Distraction"
+];
+
+const PATHS = [
+  { id: 'student', name: 'Student Room', desc: 'For exams & learning', count: 24 },
+  { id: 'career', name: 'Job Seeker', desc: 'Interview prep & skills', count: 18 },
+  { id: 'beginner', name: 'New Reader', desc: 'Easy to read books', count: 32 },
+  { id: 'pro', name: 'Professional', desc: 'Leadership & deep work', count: 15 },
+];
+
+const CATEGORIES = [
+  { id: 'self-help', name: 'Self Help' },
+  { id: 'finance', name: 'Finance' },
+  { id: 'fiction', name: 'Fiction' },
+  { id: 'biography', name: 'Biography' },
+  { id: 'productivity', name: 'Productivity' },
+  { id: 'philosophy', name: 'Philosophy' },
+  { id: 'business', name: 'Business' },
+  { id: 'psychology', name: 'Psychology' },
+];
+
+export default function Home({ setModalBook }) {
+  const { books, loading } = useBooks();
   const navigate = useNavigate();
+  const containerRef = useRef(null);
+  const [activeProblem, setActiveProblem] = useState(PROBLEMS[0]);
 
   useEffect(() => {
-    const obs = new IntersectionObserver((entries) => {
-      entries.forEach((e) => { if (e.isIntersecting) e.target.classList.add('visible'); });
-    }, { threshold: 0.1 });
-    document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
-    return () => obs.disconnect();
-  }, []);
+    if (!loading && containerRef.current) {
+      // 1. Section Title Animations
+      const titles = gsap.utils.toArray('.sec-title');
+      titles.forEach(title => {
+        gsap.from(title, {
+          y: 30,
+          opacity: 0,
+          duration: 0.7,
+          scrollTrigger: {
+            trigger: title,
+            start: 'top 90%',
+            toggleActions: 'play none none none'
+          }
+        });
+      });
+
+      // 2. Shelf Plank Animations
+      const planks = gsap.utils.toArray('.shelf-plank');
+      planks.forEach(plank => {
+        gsap.from(plank, {
+          scaleX: 0,
+          transformOrigin: 'left',
+          duration: 0.8,
+          ease: 'power3.out',
+          scrollTrigger: {
+            trigger: plank,
+            start: 'top 95%',
+            toggleActions: 'play none none none'
+          }
+        });
+      });
+
+      // 3. Batch Book Card Animations
+      ScrollTrigger.batch('.book-card-3d', {
+        onEnter: batch => gsap.from(batch, {
+          y: 60,
+          opacity: 0,
+          stagger: 0.15,
+          duration: 0.6,
+          ease: 'back.out(1.4)',
+          overwrite: true
+        }),
+        start: 'top 90%'
+      });
+      
+      // 4. Animate stat counters
+      const counters = gsap.utils.toArray('.stat-number');
+      counters.forEach(counter => {
+        const target = +counter.getAttribute('data-target');
+        const suffix = counter.getAttribute('data-suffix') || '';
+        gsap.to(counter, {
+          innerHTML: target,
+          duration: 2,
+          snap: { innerHTML: 1 },
+          scrollTrigger: {
+            trigger: counter,
+            start: 'top 85%',
+          },
+          onUpdate: function() {
+            counter.innerHTML = Math.ceil(this.targets()[0].innerHTML) + suffix;
+          }
+        });
+      });
+    }
+    
+    return () => {
+      ScrollTrigger.getAll().forEach(t => t.kill());
+    };
+  }, [loading]);
+
+  if (loading) return <LoadingSpinner text="Getting the shop ready..." />;
+
+  const featuredBooks = books.filter(b => b.featured).slice(0, 6);
+  const trendingBooks = books.filter(b => b.trending).slice(0, 6);
+  const newArrivals = books.filter(b => b.newArrival).slice(0, 6);
+  const bestsellers = books.filter(b => b.bestseller).slice(0, 6);
 
   return (
-    <>
-      <div className="orb orb1"></div>
-      <div className="orb orb2"></div>
-      <div className="orb orb3"></div>
+    <div className="home-container" ref={containerRef} style={{ paddingTop: '100px' }}>
+      
+      {/* 1. HERO */}
+      <section className="section container gsap-section">
+        <div className="flex-between">
+          <div className="flex-col" style={{ flex: 1, zIndex: 10 }}>
+            {/* Hanging Lamp Mock */}
+            <div style={{ position: 'absolute', top: -50, left: 100, width: 4, height: 100, background: '#3A1A08' }}>
+               <div style={{ position: 'absolute', bottom: -20, left: -28, width: 60, height: 30, background: '#FFE066', borderRadius: '50% 50% 10% 10%' }}></div>
+            </div>
+            
+            <div className="eyebrow inline-block mb-4 relative z-10 bg-interior px-4 py-1 rounded-full border border-borderWarm" style={{ color: 'var(--terra)' }}>
+              Welcome to the BookShop
+            </div>
+            <h1 className="font-fredoka text-6xl text-brown mb-4 leading-tight">
+              A Cozy Corner for your <br/>
+              <span style={{ color: 'var(--terra)' }}>Perfect Read</span>
+            </h1>
+            <p className="text-xl text-textMed mb-8 max-w-lg font-nunito">
+              Discover books uniquely suited to your mood, goals, and struggles. Step up to the counter!
+            </p>
+            
+            <div className="flex gap-4 p-4 bg-interior rounded-xl border-2 border-borderWarm max-w-lg">
+              <input 
+                placeholder="Search authors, titles, moods..." 
+                className="flex-1 bg-transparent border-none outline-none text-brown"
+              />
+              <button className="clay-btn btn-primary" onClick={() => navigate('/discover')}>Search</button>
+            </div>
 
-      {/* HERO */}
-      <div className="hero">
-        <div className="hero-left">
-          <div className="hero-badge">
-            <span className="badge-dot"></span>
-            Smart Book Discovery for Indian Readers
-          </div>
-          <h1 className="hero-title">
-            Find the book<br />that fits your<br /><span className="grad">life right now</span>
-          </h1>
-          <p className="hero-desc">Not just bestsellers. Not just categories. BookSmart recommends books based on your real problems, mood, and where you are in life — in Hindi &amp; English.</p>
-          <div className="hero-search-box">
-            <input placeholder="What's bothering you? Career? Focus? Confidence?..." />
-            <button className="hero-search-btn" onClick={() => navigate('/discover')}>
-              <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" /></svg>
-              Search
-            </button>
-          </div>
-          <div className="hero-stats">
-            <div><div className="stat-n">200+</div><div className="stat-l">Curated Books</div></div>
-            <div><div className="stat-n">8</div><div className="stat-l">Life Problems</div></div>
-            <div><div className="stat-n">3</div><div className="stat-l">Languages</div></div>
-          </div>
-        </div>
-
-        <div className="hero-right">
-          <div className="book-stack">
-            <div className="floating-book book1" onClick={() => setModalBook(BOOKS_DATA[0])}>
-              <img src="https://covers.openlibrary.org/b/isbn/9780735211292-L.jpg" alt="Atomic Habits" onError={(e) => { e.target.src = 'https://via.placeholder.com/140x210/1a1030/f5a623?text=Atomic+Habits' }} />
-            </div>
-            <div className="floating-book book2" onClick={() => setModalBook(BOOKS_DATA[1])}>
-              <img src="https://covers.openlibrary.org/b/isbn/9780525559474-L.jpg" alt="Ikigai" onError={(e) => { e.target.src = 'https://via.placeholder.com/155x230/0f0820/00e5a0?text=Ikigai' }} />
-            </div>
-            <div className="floating-book book3" onClick={() => setModalBook(BOOKS_DATA[2])}>
-              <img src="https://covers.openlibrary.org/b/isbn/9781612680194-L.jpg" alt="Rich Dad Poor Dad" onError={(e) => { e.target.src = 'https://via.placeholder.com/130x200/0a0618/4f8dff?text=Rich+Dad' }} />
-            </div>
-            <div className="floating-book book4" onClick={() => setModalBook(BOOKS_DATA[3])}>
-              <img src="https://covers.openlibrary.org/b/isbn/9781455586691-L.jpg" alt="Deep Work" onError={(e) => { e.target.src = 'https://via.placeholder.com/120x180/110d1e/ff5fa0?text=Deep+Work' }} />
-            </div>
-            <div className="floating-book book5" onClick={() => setModalBook(BOOKS_DATA[4])}>
-              <img src="https://covers.openlibrary.org/b/isbn/9780671027032-L.jpg" alt="How to Win Friends" onError={(e) => { e.target.src = 'https://via.placeholder.com/125x190/0d1a0a/00e5a0?text=Win+Friends' }} />
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* MOOD */}
-      <div className="section reveal">
-        <div className="sec-eyebrow">How are you feeling?</div>
-        <h2 className="sec-title">Discover by <span style={{ color: 'var(--amber)' }}>Mood</span></h2>
-        <p className="sec-sub">Tell us your emotional state and we'll find the perfect book for this moment</p>
-        <div className="mood-grid">
-          {[
-            { img: 'https://images.unsplash.com/photo-1474552226712-ac0f0961a954?w=128&h=128&fit=crop', name: '😔 Feeling Low', desc: 'Sadness, stress or emotional exhaustion pulling you down', count: '12 books →', mc: 'rgba(255,95,160,0.2)' },
-            { img: 'https://images.unsplash.com/photo-1555374018-13a8994ab246?w=128&h=128&fit=crop', name: '😕 Confused', desc: 'Lost about life direction, career or relationships', count: '18 books →', mc: 'rgba(79,141,255,0.2)' },
-            { img: 'https://images.unsplash.com/photo-1552664730-d307ca884978?w=128&h=128&fit=crop', name: '🔥 Motivated', desc: 'Ready to take on the world and level up fast', count: '24 books →', mc: 'rgba(0,229,160,0.2)' },
-            { img: 'https://images.unsplash.com/photo-1541199249251-f713e6145474?w=128&h=128&fit=crop', name: '😴 Burned Out', desc: 'Exhausted, overwhelmed, need to reset and breathe', count: '15 books →', mc: 'rgba(245,166,35,0.2)' },
-          ].map((m, i) => (
-            <div key={i} className="mood-card" style={{ '--mc': m.mc }} onClick={() => navigate('/discover')}>
-              <img className="mood-img" src={m.img} alt={m.name} onError={(e) => { e.target.style.display = 'none' }} />
-              <div className="mood-name">{m.name}</div>
-              <div className="mood-desc">{m.desc}</div>
-              <div className="mood-count">{m.count}</div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* FEATURED BOOKS */}
-      <div className="section reveal">
-        <div className="sec-eyebrow">Hand Picked</div>
-        <h2 className="sec-title">Featured <span style={{ color: 'var(--amber)' }}>Books</span></h2>
-        <p className="sec-sub">Curated for real-life Indian readers — students, job seekers &amp; beginners</p>
-        <div className="books-row">
-          {BOOKS_DATA.slice(0, 3).map((book, i) => (
-            <BookCard key={i} book={book} onClick={() => setModalBook(book)} />
-          ))}
-        </div>
-      </div>
-
-      {/* PROBLEM SECTION */}
-      <div className="section reveal">
-        <div className="problem-wrap">
-          <div>
-            <div className="sec-eyebrow">Problem-Based Discovery</div>
-            <h2 className="sec-title">Tell us your <span style={{ color: 'var(--amber)' }}>problem</span></h2>
-            <p className="sec-sub" style={{ marginBottom: '1.75rem' }}>Select what you're going through and we'll recommend the exact books that helped thousands of others overcome it</p>
-            <div className="prob-chips">
-              {['Career Confusion', 'Low Confidence', 'Lack of Focus', 'Emotional Stress', 'Money & Finance', 'Communication'].map((p, i) => (
-                <div key={i} className={`prob-chip${i === 0 ? ' active' : ''}`}>{p}</div>
-              ))}
-            </div>
-            <button className="btn-cta" onClick={() => navigate('/discover')}>Show Matching Books →</button>
-          </div>
-          <div className="prob-visual">
-            <img className="prob-img"
-              src="https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=600&h=450&fit=crop"
-              alt="Books"
-              onError={(e) => { e.target.src = 'https://via.placeholder.com/600x450/16112a/f5a623?text=Books' }} />
-          </div>
-        </div>
-      </div>
-
-      {/* READING PATHS */}
-      <div className="section reveal">
-        <div className="sec-eyebrow">Curated Journeys</div>
-        <h2 className="sec-title">Reading <span style={{ color: 'var(--amber)' }}>Paths</span></h2>
-        <p className="sec-sub">Tailored book journeys for your life stage — not random lists</p>
-        <div className="paths-grid">
-          {[
-            { img: 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=400&h=250&fit=crop', name: 'Student', desc: 'Exams, placements & career beginnings', count: '24 books' },
-            { img: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=250&fit=crop', name: 'Job Seeker', desc: 'Interviews, skills & confidence', count: '18 books' },
-            { img: 'https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?w=400&h=250&fit=crop', name: 'Beginner Reader', desc: 'Build the habit, start easy', count: '15 books' },
-            { img: 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=400&h=250&fit=crop', name: 'Professional', desc: 'Leadership, focus & executive growth', count: '30 books' },
-          ].map((p, i) => (
-            <div key={i} className="path-card reveal" style={{ transitionDelay: `${i * 0.1}s` }}>
-              <img className="path-img" src={p.img} alt={p.name} onError={(e) => { e.target.src = `https://via.placeholder.com/400x250/16112a/f5a623?text=${p.name}` }} />
-              <div className="path-body">
-                <div className="path-name">{p.name}</div>
-                <div className="path-desc">{p.desc}</div>
-                <div className="path-count">{p.count}</div>
+            <div className="flex gap-8 mt-12">
+              <div>
+                <h3 className="font-fredoka text-3xl text-terra"><span className="stat-number" data-target="100" data-suffix="+">0</span></h3>
+                <p className="text-sm font-bold text-textMed uppercase">Curated Books</p>
+              </div>
+              <div className="w-px bg-borderWarm" />
+              <div>
+                 <h3 className="font-fredoka text-3xl text-mint"><span className="stat-number" data-target="15" data-suffix="+">0</span></h3>
+                <p className="text-sm font-bold text-textMed uppercase">Reading Paths</p>
               </div>
             </div>
+          </div>
+          
+          <div style={{ flex: 1, height: '450px', position: 'relative' }}>
+            <FloatingBooks onBookClick={(index) => setModalBook(books[index])} />
+          </div>
+        </div>
+      </section>
+
+      <div className="shelf-plank my-8 mx-auto w-11/12" />
+
+      {/* 2. CATEGORIES STRIP */}
+      <section className="section container gsap-section">
+        <div className="flex gap-4 overflow-x-auto pb-4 hide-scrollbar">
+          {CATEGORIES.map(cat => (
+            <button 
+              key={cat.id} 
+              onClick={() => navigate(`/discover?category=${cat.id}`)}
+              className="clay-btn px-6 py-3 rounded-full bg-cream text-brown hover:bg-interior whitespace-nowrap font-bold transition-transform hover:-translate-y-1"
+            >
+              # {cat.name}
+            </button>
           ))}
         </div>
-      </div>
-    </>
-  );
-};
+      </section>
 
-export default Home;
+      <div className="shelf-plank my-8 mx-auto w-11/12" />
+
+      {/* 3. TRENDING BOOKS */}
+      <section className="section container gsap-section">
+        <div className="flex justify-between items-end mb-6">
+            <div>
+                 <div className="eyebrow" style={{ color: 'var(--amber)' }}>What's Hot</div>
+                 <h2 className="sec-title">Trending <em>Now</em></h2>
+            </div>
+            <button className="text-terra font-bold hover:underline" onClick={()=>navigate('/discover')}>View All →</button>
+        </div>
+        <div className="flex gap-6 overflow-x-auto pb-4 hide-scrollbar">
+            {trendingBooks.map(book => (
+                <div key={book._id} className="min-w-[200px]">
+                     <BookCard3D book={book} onClick={() => setModalBook(book)} />
+                </div>
+            ))}
+        </div>
+      </section>
+
+      <div className="shelf-plank my-8 mx-auto w-11/12" />
+
+      {/* 4. NEW ARRIVALS */}
+      <section className="section container gsap-section">
+        <div className="eyebrow" style={{ color: 'var(--mint)' }}>Just Arrived</div>
+        <h2 className="sec-title mb-8">Fresh on the <em>Shelves</em></h2>
+        <div className="flex gap-6 overflow-x-auto pb-4 hide-scrollbar">
+            {newArrivals.map(book => (
+                <div key={book._id} className="min-w-[200px]">
+                     <BookCard3D book={book} onClick={() => setModalBook(book)} />
+                </div>
+            ))}
+        </div>
+      </section>
+
+      <div className="shelf-plank my-8 mx-auto w-11/12" />
+
+      {/* 5. FEATURED BOOKS (3x2 Grid) */}
+      <section className="section container gsap-section wood-panel p-8 rounded-[var(--radius-xl)]">
+        <div className="flex-col items-center">
+            <div className="eyebrow text-gold">Hand Picked</div>
+            <h2 className="sec-title text-center text-cream mb-8">Featured <em>Books</em></h2>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 w-full max-w-5xl">
+               {featuredBooks.map(book => (
+                   <BookCard3D key={book._id} book={book} onClick={() => setModalBook(book)} />
+               ))}
+            </div>
+        </div>
+      </section>
+
+      <div className="shelf-plank my-8 mx-auto w-11/12" />
+
+      {/* 6. MOOD DISCOVERY */}
+      <section className="section container gsap-section">
+        <h2 className="sec-title text-center mb-12">Read by <em>Mood</em></h2>
+        <div className="relative">
+            {/* SVG Rope Line */}
+            <svg className="absolute top-4 left-0 w-full h-8 z-[-1]" preserveAspectRatio="none">
+                 <path d="M0,15 Q500,-10 1200,20" stroke="#8B5A2B" strokeWidth="4" fill="transparent" strokeDasharray="10 5" />
+            </svg>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+               {MOODS.map(mood => (
+                 <SignboardCard key={mood.id} mood={mood} theme={mood.theme} onClick={() => navigate(`/discover?mood=${mood.id}`)} />
+               ))}
+            </div>
+        </div>
+      </section>
+
+      <div className="shelf-plank my-8 mx-auto w-11/12" />
+
+      {/* 7. PROBLEM-BASED */}
+      <section className="section container gsap-section text-center">
+        <div className="eyebrow text-terra">Tell Us Your Problem</div>
+        <h2 className="sec-title mb-6">Find your <em>Cure</em></h2>
+        <div className="flex justify-center flex-wrap gap-4 mb-12 max-w-2xl mx-auto">
+          {PROBLEMS.map(p => (
+            <button 
+                key={p} 
+                onClick={() => setActiveProblem(p)}
+                className={`clay-btn px-6 py-2 rounded-full font-bold transition-all ${activeProblem === p ? 'bg-terra text-white scale-110' : 'bg-interior text-primary hover:bg-cream'}`}
+            >
+                {p}
+            </button>
+          ))}
+        </div>
+        <div className="flex gap-6 justify-center overflow-x-auto pb-4 px-4">
+             {books.filter(b => b.problems && b.problems.includes(activeProblem)).slice(0, 4).map(book => (
+                <div key={book._id} className="min-w-[180px]">
+                     <BookCard3D book={book} onClick={() => setModalBook(book)} />
+                </div>
+             ))}
+             {books.filter(b => b.problems && b.problems.includes(activeProblem)).length === 0 && (
+                 <p className="text-textMed italic">Select another problem, our pharmacist is bringing more books.</p>
+             )}
+        </div>
+      </section>
+
+      <div className="shelf-plank my-8 mx-auto w-11/12" />
+
+      {/* 8. READING PATHS */}
+      <section className="section container gsap-section">
+        <div className="eyebrow text-mint text-center">Your Reading Journey</div>
+        <h2 className="sec-title text-center mb-12">Choose your <em>Door</em></h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+           {PATHS.map(path => (
+             <ShopDoor key={path.id} path={path} onClick={() => navigate(`/discover?path=${path.id}`)} />
+           ))}
+        </div>
+      </section>
+
+      <div className="shelf-plank my-8 mx-auto w-11/12" />
+
+      {/* 9. BESTSELLERS */}
+      <section className="section container gsap-section">
+        <div className="eyebrow text-gold">Most Loved</div>
+        <h2 className="sec-title mb-8">All-time <em>Bestsellers</em></h2>
+        <div className="flex gap-6 overflow-x-auto pb-4 hide-scrollbar">
+            {bestsellers.map(book => (
+                <div key={book._id} className="min-w-[200px]">
+                     <BookCard3D book={book} onClick={() => setModalBook(book)} />
+                </div>
+            ))}
+        </div>
+      </section>
+
+      <div className="shelf-plank my-8 mx-auto w-11/12" />
+
+      {/* 10. WHY BOOKSMART */}
+      <section className="section container gsap-section">
+        <h2 className="sec-title text-center mb-10">Why <em>BookSmart?</em></h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+             {[
+                 { title: "Problem-Based", desc: "Find books that solve your exact life issues." },
+                 { title: "Honest Reviews", desc: "Real reviews from genuine verified purchasers." },
+                 { title: "Language Inclusive", desc: "Available in multiple Indian & foreign languages." },
+                 { title: "Premium UI", desc: "An unforgettable cozy 3D shopping experience." }
+             ].map((feature, i) => (
+                 <div key={i} className="bg-interior p-6 rounded-2xl border-2 border-borderWarm shadow-sm relative overflow-hidden transition-transform hover:-translate-y-2">
+                     <div className="w-12 h-12 bg-terra/20 rounded-full mb-4 flex items-center justify-center text-terra font-bold">✓</div>
+                     <h3 className="font-fredoka text-xl text-brown mb-2">{feature.title}</h3>
+                     <p className="text-textMed text-sm">{feature.desc}</p>
+                 </div>
+             ))}
+        </div>
+      </section>
+
+      <div className="shelf-plank my-8 mx-auto w-11/12" />
+
+      {/* 11. TESTIMONIALS */}
+      <section className="section container gsap-section">
+        <h2 className="sec-title text-center mb-10">From the <em>Readers</em></h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+             {[
+                 { name: "Rahul Sharma", text: "Found the exact book I needed for my career transition. The delivery was super fast too!" },
+                 { name: "Priya V.", text: "This UI is gorgeous. I feel like I am standing in a real magical library. Love the collections." },
+                 { name: "Arjun K.", text: "The problem-based search is brilliant. I was feeling burned out and it recommended exactly what helped." }
+             ].map((review, i) => (
+                 <div key={i} className="bg-cream p-6 rounded-2xl relative shadow-md">
+                     <div className="flex gap-1 mb-4 text-gold">★★★★★</div>
+                     <p className="text-brown italic mb-6">"{review.text}"</p>
+                     <p className="font-bold text-primary">- {review.name}</p>
+                 </div>
+             ))}
+        </div>
+      </section>
+
+      <div className="shelf-plank my-8 mx-auto w-11/12" />
+
+      {/* 12. NEWSLETTER */}
+      <section className="section container gsap-section mb-20 text-center">
+         <div className="wood-panel inline-block p-12 rounded-[var(--radius-xl)] w-full max-w-3xl">
+             <h2 className="font-fredoka text-4xl text-cream mb-4 drop-shadow-md">Join the Book Club</h2>
+             <p className="text-cream/80 mb-8 text-lg">Get weekly recommendations and exclusive discounts.</p>
+             <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                 <input type="email" placeholder="Your cozy email..." className="px-6 py-4 rounded-xl border-none outline-none w-full sm:w-auto flex-1 font-bold shadow-inner text-brown" />
+                 <button className="clay-btn btn-primary px-8 py-4 !text-lg">Subscribe</button>
+             </div>
+         </div>
+      </section>
+
+    </div>
+  );
+}
