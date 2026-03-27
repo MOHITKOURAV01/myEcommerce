@@ -1,27 +1,56 @@
+version: '3.8'
 
 services:
+  # MongoDB
+  mongo:
+    image: mongo:7
+    container_name: booksmart-mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    environment:
+      MONGO_INITDB_DATABASE: booksmart
+    restart: unless-stopped
+
+  # Redis
+  redis:
+    image: redis:7-alpine
+    container_name: booksmart-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+
+  # Server
   server:
-    build:
-      context: ./server
-      dockerfile: Dockerfile
+    build: ./server
+    container_name: booksmart-server
     ports:
       - "5000:5000"
+    env_file:
+      - ./server/.env
+    depends_on:
+      - mongo
+      - redis
     environment:
-      - NODE_ENV=development
-    volumes:
-      - ./server:/app
-      - /app/node_modules
+      MONGO_URI: mongodb://mongo:27017/booksmart
+      REDIS_URL: redis://redis:6379
+    restart: unless-stopped
 
+  # Client
   client:
-    build:
-      context: ./client
-      dockerfile: Dockerfile
+    build: ./client
+    container_name: booksmart-client
     ports:
       - "5173:5173"
-    environment:
-      - NODE_ENV=development
-    volumes:
-      - ./client:/app
-      - /app/node_modules
     depends_on:
       - server
+    environment:
+      VITE_API_URL: http://localhost:5000
+    restart: unless-stopped
+
+volumes:
+  mongo_data:
+  redis_data:
