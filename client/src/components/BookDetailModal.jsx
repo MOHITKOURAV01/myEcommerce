@@ -1,55 +1,79 @@
-import toast from 'react-hot-toast';
+import React from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 
-const BookDetailModal = ({ book, onClose }) => {
+export default function BookDetailModal({ book, onClose }) {
   if (!book) return null;
-  const coverUrl = `https://covers.openlibrary.org/b/isbn/${book.isbn}-L.jpg`;
 
   return (
-    <div className="overlay" onClick={onClose}>
-      <div className="modal" onClick={(e) => e.stopPropagation()}>
-        <button className="modal-close" onClick={onClose}>✕</button>
-        <div className="modal-hero">
-          <img
-            className="modal-book-img"
-            src={coverUrl}
-            alt={book.title}
-            onError={(e) => { e.target.src = `https://via.placeholder.com/125x180/16112a/f5a623?text=${encodeURIComponent(book.title)}`; }}
-          />
-          <div className="modal-overlay-grad"></div>
-        </div>
-        <div className="modal-body">
-          <div className="modal-title">{book.title}</div>
-          <div className="modal-author">by {book.author}</div>
-          <div className="modal-tags">
-            {book.tags?.map((t, i) => (
-              <span key={i} className="tag" style={{ color: t.c, background: t.bg }}>{t.l}</span>
-            ))}
+    <AnimatePresence>
+      <motion.div 
+        className="modal-overlay"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        onClick={onClose}
+      >
+        <motion.div 
+          className="open-book-modal"
+          onClick={(e) => e.stopPropagation()}
+          initial={{ scale: 0.9, y: 50, opacity: 0 }}
+          animate={{ scale: 1, y: 0, opacity: 1 }}
+          exit={{ scale: 0.9, y: 50, opacity: 0 }}
+        >
+          {/* Left page — cover */}
+          <div className="book-left-page">
+            <img src={book.coverUrl || `https://covers.openlibrary.org/b/isbn/${book.isbn}-L.jpg`} alt={book.title} />
           </div>
-          <div className="info-card">
-            <div className="info-label" style={{ color: 'var(--amber)' }}>💡 Why Read This?</div>
-            <div className="info-text">{book.why}</div>
-          </div>
-          <div className="info-card">
-            <div className="info-label" style={{ color: 'var(--green)' }}>✅ Best For</div>
-            <div className="info-text">{book.shouldRead}</div>
-          </div>
-          <div className="info-card">
-            <div className="info-label" style={{ color: '#ff5f5f' }}>⚠️ Who Should NOT Read</div>
-            <div className="info-text">{book.shouldNot}</div>
-          </div>
-          <div className="info-card">
-            <div className="info-label" style={{ color: 'var(--blue)' }}>🎯 Expected Outcome</div>
-            <div className="info-text">{book.outcome}</div>
-          </div>
-          <p className="modal-time">⏱ Reading time: <span>{book.time}</span></p>
-          <div className="modal-buy">
-            <button className="modal-buy-btn amz" style={{ boxShadow: '0 0 20px rgba(255,153,0,0.2)' }} onClick={() => toast.success('Redirecting to Amazon...')}>🛒 Buy on Amazon</button>
-            <button className="modal-buy-btn flip" style={{ boxShadow: '0 0 20px rgba(40,116,240,0.2)' }} onClick={() => toast.success('Redirecting to Flipkart...')}>🛒 Buy on Flipkart</button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
 
-export default BookDetailModal;
+          {/* Center spine */}
+          <div className="book-center-spine" />
+
+          {/* Right page — details */}
+          <div className="book-right-page">
+            <h2>{book.title}</h2>
+            <p className="book-author">by {book.author}</p>
+            
+            <div className="book-tags">
+              {book.moods && book.moods.map(m => (
+                <span key={m} className="book-tag">{m}</span>
+              ))}
+              {book.problems && book.problems.map(p => (
+                <span key={p} className="book-tag">{p}</span>
+              ))}
+            </div>
+
+            <div className="detail-section why">
+              <div className="section-stamp">Why Read?</div>
+              <p>{book.why || "This book offers incredible insights that will change your perspective."}</p>
+            </div>
+            
+            <div className="detail-section for">
+              <div className="section-stamp">Best For</div>
+              <p>{book.shouldRead || "Anyone looking to improve their understanding of this topic."}</p>
+            </div>
+            
+            <div className="detail-section not">
+              <div className="section-stamp">Not For</div>
+              <p>{book.shouldNot || "Those who are not ready for deep analytical concepts."}</p>
+            </div>
+
+            <div className="buy-btns">
+              {book.amazonLink && (
+                <button className="clay-btn amz-btn" onClick={() => window.open(book.amazonLink, '_blank')}>
+                  Buy on Amazon
+                </button>
+              )}
+              {book.flipkartLink && (
+                <button className="clay-btn flip-btn" onClick={() => window.open(book.flipkartLink, '_blank')}>
+                  Buy on Flipkart
+                </button>
+              )}
+            </div>
+            
+            <button className="close-book" onClick={onClose}>Close</button>
+          </div>
+        </motion.div>
+      </motion.div>
+    </AnimatePresence>
+  );
+}
