@@ -2,54 +2,92 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
+const cookieParser = require('cookie-parser');
 const mongoSanitize = require('express-mongo-sanitize');
-const rateLimit = require('express-rate-limit');
 const connectDB = require('./config/db');
+const { connectRedis } = require('./utils/redis');
+const { notFound, errorHandler } = require('./middleware/errorMiddleware');
+const { apiLimiter, authLimiter, orderLimiter } = require('./middleware/rateLimiter');
 
 const app = express();
 
-// Connect to Database
-connectDB();
+// Connect to Databases
+if (process.env.USE_MOCK_DATA !== 'true' && process.env.NODE_ENV !== 'test') {
+  connectDB();
+  connectRedis();
+}
 
-// Security & CORS Middleware
+// ─── Security Middleware ────────────────────────
 app.use(helmet());
-app.use(cors({ origin: 'http://localhost:3000' }));
-app.use(mongoSanitize());
 
-// Rate Limiter
-const apiLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 100, // Limit each IP to 100 requests per 15 minutes
-    message: 'Too many requests from this IP, please try again after 15 minutes',
-});
+// ─── CORS ───────────────────────────────────────
+app.use(cors({
+  origin: true,
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
+}));
 
-// Middleware
-app.use(express.json());
+// ─── Stripe Webhook (raw body) ──────────────────
+const { stripeWebhook } = require('./controllers/paymentController');
+app.post(
+  '/webhook/stripe',
+  express.raw({ type: 'application/json' }),
+  stripeWebhook
+);
 
-// Basic Route
-app.get('/', (req, res) => {
-    res.send('BookSmart API is running');
-});
+// ─── Body Parsers (Global) ────────────────────────
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+app.use(cookieParser());
+// app.use(mongoSanitize()); // Disabled due to Express 5 compatibility issues
+
+// ─── Rate Limiters ──────────────────────────────
+app.use('/api/', apiLimiter);
+app.use('/api/auth/', authLimiter);
+
+// ─── Routes ─────────────────────────────────────
+app.use('/api/auth', require('./routes/authRoutes'));
+app.use('/api/books', require('./routes/bookRoutes'));
+app.use('/api/cart', require('./routes/cartRoutes'));
+app.use('/api/reviews', require('./routes/reviewRoutes'));
+app.use('/api/wishlist', require('./routes/wishlistRoutes'));
+app.use('/api/payment', require('./routes/paymentRoutes'));
+app.use('/api/orders', require('./routes/orderRoutes'));
+app.use('/api/admin', require('./routes/adminRoutes'));
 
 // Health Check
 app.get('/health', (req, res) => {
-    res.status(200).json({ status: "OK", service: "BookSmart API" });
+  res.status(200).json({
+    status: 'OK',
+    service: 'BookSmart API',
+    uptime: `${Math.floor(process.uptime())}s`,
+    timestamp: new Date().toISOString(),
+    env: process.env.NODE_ENV,
+  });
 });
 
-const { errorHandler, notFound } = require('./middleware/errorMiddleware');
+// Root
+app.get('/', (req, res) => {
+  res.json({
+    message: 'BookSmart API is running 📚',
+    version: '2.0.0',
+    docs: '/health',
+  });
+});
 
-// Apply rate limiting to all /api/ routes
-app.use('/api/', apiLimiter);
-
-// Routes
-app.use('/api/books', require('./routes/bookRoutes'));
-
-// Error Middleware
+// ─── Error Handling ─────────────────────────────
 app.use(notFound);
 app.use(errorHandler);
 
-const PORT = process.env.PORT || 5000;
+// ─── Start Server ───────────────────────────────
+const PORT = process.env.PORT || 5001;
+if (process.env.NODE_ENV !== 'test') {
+  app.listen(PORT, () => {
+    console.log(`\n📚 BookSmart API running on port ${PORT}`);
+    console.log(`   Environment: ${process.env.NODE_ENV || 'development'}`);
+    console.log(`   Health: http://localhost:${PORT}/health\n`);
+  });
+}
 
-app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
-});
+module.exports = app;
