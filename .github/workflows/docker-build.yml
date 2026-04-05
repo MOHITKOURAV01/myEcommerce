@@ -14,6 +14,11 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
 
+    - name: Setup Dummy Environment Variables
+      run: |
+        cp server/.env.example server/.env
+        touch client/.env
+
     - name: Validate Docker Compose Config
       run: docker compose config
       
