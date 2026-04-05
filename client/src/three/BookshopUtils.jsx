@@ -1,6 +1,5 @@
 import * as THREE from 'three'
-import { useRef, useMemo } from 'react'
-import { useFrame } from '@react-three/fiber'
+import { useMemo } from 'react'
 import { Float, RoundedBox, Sparkles } from '@react-three/drei'
 
 // Magical Fireflies using Sparkles for better quality
