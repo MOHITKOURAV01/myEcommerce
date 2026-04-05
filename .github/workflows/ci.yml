@@ -71,7 +71,7 @@ jobs:
       - name: Build
         run: cd client && npm ci && npm run build
       - name: Upload Artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: client-build
           path: client/dist
