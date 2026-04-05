@@ -11,7 +11,7 @@ import Navbar from './components/Navbar';
 import { Footer, BookDetailModal, AuthModal } from './components/ModalUI';
 import { CartDrawer } from './components/ShopComponents';
 import { LoadingSpinner } from './components/InteractiveUI';
-import { ProtectedRoute, AdminRoute } from './components/ProtectedRoute';
+import { ProtectedRoute } from './components/ProtectedRoute';
 // Lazy load pages
 const Landing = lazy(() => import('./pages/Landing'));
 const Home = lazy(() => import('./pages/Home'));
@@ -22,7 +22,6 @@ const Cart = lazy(() => import('./pages/Cart'));
 const Checkout = lazy(() => import('./pages/Checkout'));
 const Profile = lazy(() => import('./pages/Profile'));
 const OrderDetail = lazy(() => import('./pages/OrderDetail'));
-const AdminLayout = lazy(() => import('./pages/admin/AdminLayout'));
 
 const pageVariants = {
   initial: { opacity: 0, y: 20 },
@@ -61,7 +60,6 @@ function AnimatedRoutes({ setModalBook }) {
             <Route path="/wishlist" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
             <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
             <Route path="/order/:id" element={<ProtectedRoute><OrderDetail /></ProtectedRoute>} />
-            <Route path="/admin/*" element={<AdminRoute><AdminLayout /></AdminRoute>} />
           </Routes>
         </Suspense>
       </motion.div>

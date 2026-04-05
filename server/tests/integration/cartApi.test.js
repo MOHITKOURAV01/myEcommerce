@@ -64,7 +64,7 @@ describe('Cart API Integration Tests', () => {
     });
 
     it('POST /api/cart/apply-coupon → applies valid coupon', async () => {
-        const coupon = await Coupon.create({
+        await Coupon.create({
             code: 'SAVE10',
             type: 'percent',
             value: 10,
@@ -87,7 +87,7 @@ describe('Cart API Integration Tests', () => {
     });
 
     it('POST /api/cart/apply-coupon → 400 on expired coupon', async () => {
-        const coupon = await Coupon.create({
+        await Coupon.create({
             code: 'EXPIRED',
             type: 'percent',
             value: 10,

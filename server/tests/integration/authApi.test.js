@@ -55,7 +55,7 @@ describe('Auth API Integration Tests', () => {
     });
 
     it('GET /api/auth/me → 200 with valid token', async () => {
-        const user = await User.create(testUser);
+        await User.create(testUser);
         const loginRes = await request(app)
             .post('/api/auth/login')
             .send({

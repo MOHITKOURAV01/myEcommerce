@@ -83,7 +83,7 @@ const templates = {
     ${data.order.tracking && data.order.tracking.url ? getButton('Track Package', data.order.tracking.url) : '<p>Your order is en route.</p>'}
     <p>Estimated Delivery: Relax, it's coming soon.</p>
   `,
-  orderDeliveredEmail: (data) => `
+  orderDeliveredEmail: (_data) => `
     <h2>Your Order Has Arrived! 📦</h2>
     <p>We hope you enjoy your new books!</p>
     ${getButton('Write a Review', `${process.env.FRONTEND_URL || 'http://localhost:5173'}/home`)}

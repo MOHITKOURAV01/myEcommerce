@@ -7,7 +7,7 @@ const sendEmail = require('../utils/sendEmail');
 
 // Helper to calc cart totals accurately server-side to prevent tampering
 const calculateTotals = (cart) => {
-  let subtotal = cart.items.reduce((acc, item) => {
+  const subtotal = cart.items.reduce((acc, item) => {
     const price = item.price || (item.book ? item.book.price : 0);
     return acc + (price * item.quantity);
   }, 0);
@@ -162,7 +162,8 @@ const confirmPaymentAndCreateOrder = asyncHandler(async (req, res) => {
 // @route   POST /api/payment/cod
 // @access  Private
 const createCODOrder = asyncHandler(async (req, res) => {
-  let { shippingAddress, addressId } = req.body;
+  const { addressId } = req.body;
+  let { shippingAddress } = req.body;
 
   // Resolve address from ID if provided
   if (!shippingAddress && addressId) {

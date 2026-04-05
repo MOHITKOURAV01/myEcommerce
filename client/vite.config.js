@@ -20,12 +20,14 @@ export default defineConfig({
     chunkSizeWarningLimit: 1200,
     rollupOptions: {
       output: {
-        manualChunks: {
-          'three-vendor': ['three', '@react-three/fiber', '@react-three/drei'],
-          'gsap-vendor': ['gsap', '@gsap/react'],
-          'framer-vendor': ['framer-motion'],
-          'stripe-vendor': ['@stripe/stripe-js', '@stripe/react-stripe-js'],
-          'react-vendor': ['react', 'react-dom', 'react-router-dom', 'axios'],
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            if (id.includes('three') || id.includes('@react-three')) return 'three-vendor';
+            if (id.includes('gsap')) return 'gsap-vendor';
+            if (id.includes('framer-motion')) return 'framer-vendor';
+            if (id.includes('stripe')) return 'stripe-vendor';
+            return 'vendor';
+          }
         },
       },
     },

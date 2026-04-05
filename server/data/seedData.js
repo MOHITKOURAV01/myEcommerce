@@ -6,8 +6,8 @@ const generateBook = (
   const encTitle = encodeURIComponent(title);
   function slugify(text) { return text.toString().toLowerCase()
     .replace(/\s+/g,'-')
-    .replace(/[^\w\-]+/g,'')
-    .replace(/\-\-+/g,'-')
+    .replace(/[^\w-]+/g,'')
+    .replace(/--+/g,'-')
     .replace(/^-+/,'')
     .replace(/-+$/,'');
   }
@@ -118,7 +118,7 @@ const titles = [
 
 let titleIdx = 0;
 
-for (let [cat, targetCount] of Object.entries(categoryMap)) {
+for (const [cat, targetCount] of Object.entries(categoryMap)) {
   const current = currentCounts[cat] || 0;
   const needed = targetCount - current;
   

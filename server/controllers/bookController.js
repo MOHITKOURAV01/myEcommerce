@@ -1,9 +1,7 @@
 const Book = require('../models/Book');
 const Category = require('../models/Category');
-const Order = require('../models/Order');
 const asyncHandler = require('../utils/asyncHandler');
 const ApiFeatures = require('../utils/apiFeatures');
-const { client: redis } = require('../utils/redis');
 
 // @desc    Get all books
 // @route   GET /api/books
@@ -81,116 +79,7 @@ const getBestsellers = asyncHandler(async (req, res) => {
   res.status(200).json({ success: true, count: books.length, data: books });
 });
 
-const getRecommendedBooks = asyncHandler(async (req, res) => {
-  // 1. Get user preferences
-  const user = req.user;
-  if (!user) {
-    // Fallback for non-auth: return top rated
-    const books = await Book.find({ rating: { $gte: 4.5 } }).limit(10).populate('category', 'name slug');
-    return res.status(200).json({ success: true, count: books.length, data: books });
-  }
-
-  const { moods = [], problems = [], languages = [] } = user.preferences || {};
-
-  // 2. Extract categories from last 10 orders
-  const lastOrders = await Order.find({ user: user._id })
-    .sort('-createdAt')
-    .limit(10)
-    .populate('orderItems.book');
-
-  const orderedBookIds = [];
-  const preferredCategories = new Set();
-  
-  lastOrders.forEach(order => {
-    order.orderItems.forEach(item => {
-      if (item.book) {
-        orderedBookIds.push(item.book._id.toString());
-        if (item.book.category) preferredCategories.add(item.book.category.toString());
-      }
-    });
-  });
-
-  // 3. Find candidates (not already ordered, matching preferences)
-  // We fetch a larger pool then score manually
-  const candidates = await Book.find({
-    _id: { $nin: orderedBookIds },
-    $or: [
-      { mood: { $in: moods } },
-      { problem: { $in: problems } },
-      { language: { $in: languages } },
-      { category: { $in: Array.from(preferredCategories) } }
-    ]
-  }).limit(50).populate('category', 'name slug');
-
-  // 4. Score candidates
-  const scored = candidates.map(book => {
-    let score = 0;
-    if (moods.includes(book.mood)) score += 3;
-    if (problems.includes(book.problem)) score += 2;
-    if (preferredCategories.has(book.category?._id?.toString())) score += 1;
-    if (languages.includes(book.language)) score += 1;
-    return { book, score };
-  });
-
-  // 5. Sort by score and return top 10
-  const result = scored
-    .sort((a, b) => b.score - a.score)
-    .slice(0, 10)
-    .map(s => s.book);
-
-  // Fallback if not enough recommendations
-  if (result.length < 4) {
-    const fallback = await Book.find({ rating: { $gte: 4.0 }, _id: { $nin: orderedBookIds } })
-      .limit(10 - result.length)
-      .populate('category', 'name slug');
-    result.push(...fallback);
-  }
-
-  res.status(200).json({ success: true, count: result.length, data: result });
-});
-
-const searchSuggestions = asyncHandler(async (req, res) => {
-  const q = (req.query.q || '').trim().toLowerCase();
-  if (!q || q.length < 2) return res.status(200).json({ success: true, data: { books: [], authors: [], categories: [] } });
-
-  const cacheKey = `suggestions:${q}`;
-  
-  try {
-    const cached = await redis.get(cacheKey);
-    if (cached) return res.status(200).json({ success: true, data: JSON.parse(cached) });
-
-    const [books, authors, categories] = await Promise.all([
-      Book.find({ title: { $regex: q, $options: 'i' } }).select('title slug author coverImage').limit(5),
-      Book.distinct('author', { author: { $regex: q, $options: 'i' } }),
-      Category.find({ name: { $regex: q, $options: 'i' } }).select('name slug').limit(3)
-    ]);
-
-    const data = {
-      books,
-      authors: authors.slice(0, 5),
-      categories
-    };
-
-    // Store in Redis (120s)
-    await redis.setEx(cacheKey, 120, JSON.stringify(data));
-
-    // Track search query (optional: for popular searches later)
-    if (req.user) {
-      const userSearchKey = `user:searches:${req.user._id}`;
-      await redis.zAdd(userSearchKey, { score: Date.now(), value: q });
-      await redis.expire(userSearchKey, 86400 * 7); // 7 days
-    }
-
-    res.status(200).json({ success: true, data });
-  } catch (err) {
-    console.error('Suggestions error:', err);
-    res.status(200).json({ success: true, data: { books: [], authors: [], categories: [] } });
-  }
-});
-
 const searchBooks = asyncHandler(async (req, res) => {
-  const q = (req.query.q || '').toLowerCase();
-  
   const features = new ApiFeatures(Book.find(), req.query)
     .search()
     .filter()
@@ -309,12 +198,10 @@ module.exports = {
   getTrendingBooks,
   getNewArrivals,
   getBestsellers,
-  getRecommendedBooks,
   searchBooks,
   getSimilarBooks,
   getBooksByCategory,
   getBookBySlug,
-  searchSuggestions,
   createBook,
   updateBook,
   deleteBook,

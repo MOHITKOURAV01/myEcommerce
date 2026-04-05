@@ -2,7 +2,6 @@ const Review = require('../models/Review');
 const Book = require('../models/Book');
 const Order = require('../models/Order');
 const asyncHandler = require('../utils/asyncHandler');
-const ApiFeatures = require('../utils/apiFeatures');
 
 // Helper to update book rating
 const updateBookRating = async (bookId) => {
@@ -122,7 +121,7 @@ const createReview = asyncHandler(async (req, res) => {
 // @route   PUT /api/reviews/:id
 // @access  Private
 const updateReview = asyncHandler(async (req, res) => {
-  let review = await Review.findById(req.params.id);
+  const review = await Review.findById(req.params.id);
 
   if (!review) {
     res.status(404);

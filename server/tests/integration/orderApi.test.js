@@ -2,7 +2,6 @@ const request = require('supertest');
 const app = require('../../server');
 const Book = require('../../models/Book');
 const User = require('../../models/User');
-const Cart = require('../../models/Cart');
 const Order = require('../../models/Order');
 const { generateAccessToken } = require('../../utils/generateToken');
 

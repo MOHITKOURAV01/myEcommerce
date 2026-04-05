@@ -5,7 +5,7 @@ const asyncHandler = require('../utils/asyncHandler');
 
 // Local calculation helper
 const calcCartTotals = (items, coupon = null) => {
-  let subtotal = items.reduce((acc, item) => {
+  const subtotal = items.reduce((acc, item) => {
     const price = item.price || (item.book ? item.book.price : 0);
     return acc + (price * item.quantity);
   }, 0);

@@ -3,18 +3,15 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const cookieParser = require('cookie-parser');
-const mongoSanitize = require('express-mongo-sanitize');
 const connectDB = require('./config/db');
-const { connectRedis } = require('./utils/redis');
 const { notFound, errorHandler } = require('./middleware/errorMiddleware');
-const { apiLimiter, authLimiter, orderLimiter } = require('./middleware/rateLimiter');
+const { apiLimiter, authLimiter } = require('./middleware/rateLimiter');
 
 const app = express();
 
 // Connect to Databases
 if (process.env.USE_MOCK_DATA !== 'true' && process.env.NODE_ENV !== 'test') {
   connectDB();
-  connectRedis();
 }
 
 // ─── Security Middleware ────────────────────────
@@ -40,7 +37,6 @@ app.post(
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
-// app.use(mongoSanitize()); // Disabled due to Express 5 compatibility issues
 
 // ─── Rate Limiters ──────────────────────────────
 app.use('/api/', apiLimiter);
@@ -54,7 +50,6 @@ app.use('/api/reviews', require('./routes/reviewRoutes'));
 app.use('/api/wishlist', require('./routes/wishlistRoutes'));
 app.use('/api/payment', require('./routes/paymentRoutes'));
 app.use('/api/orders', require('./routes/orderRoutes'));
-app.use('/api/admin', require('./routes/adminRoutes'));
 
 // Health Check
 app.get('/health', (req, res) => {

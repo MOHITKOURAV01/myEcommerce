@@ -26,7 +26,7 @@ class ApiFeatures {
     Object.keys(queryObj).forEach(key => {
       const match = key.match(/^(.+)\[(gte|gt|lte|lt|in)\]$/);
       if (match) {
-        const [_, field, op] = match;
+        const [ , field, op] = match;
         if (!queryObj[field]) queryObj[field] = {};
         queryObj[field][op] = queryObj[key];
         delete queryObj[key];

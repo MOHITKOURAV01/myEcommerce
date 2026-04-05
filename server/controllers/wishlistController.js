@@ -57,7 +57,7 @@ const toggleWishlist = asyncHandler(async (req, res) => {
 const removeFromWishlist = asyncHandler(async (req, res) => {
   const { bookId } = req.params;
 
-  let wishlist = await Wishlist.findOne({ user: req.user._id });
+  const wishlist = await Wishlist.findOne({ user: req.user._id });
   if (!wishlist) {
     res.status(404);
     throw new Error('Wishlist not found');
@@ -81,7 +81,7 @@ const moveToCart = asyncHandler(async (req, res) => {
   const { bookId } = req.params;
 
   // 1. Remove from Wishlist
-  let wishlist = await Wishlist.findOne({ user: req.user._id });
+  const wishlist = await Wishlist.findOne({ user: req.user._id });
   if (!wishlist) {
     res.status(404);
     throw new Error('Wishlist not found');

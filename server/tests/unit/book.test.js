@@ -1,4 +1,3 @@
-const mongoose = require('mongoose');
 const Book = require('../../models/Book');
 
 describe('Book Model Unit Tests', () => {

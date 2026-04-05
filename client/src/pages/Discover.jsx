@@ -90,15 +90,18 @@ export default function Discover({ setModalBook }) {
   const navigate = useNavigate();
 
   // Initial filters from URL params
-  const [filters, setFilters] = useState({
-    category: '',
-    mood: '',
-    problem: '',
-    path: '',
-    price: 1000,
-    minRating: 0,
-    inStock: false,
-    search: ''
+  const [filters, setFilters] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    return {
+      category: params.get('category') || '',
+      mood: params.get('mood') || '',
+      problem: params.get('problem') || '',
+      path: params.get('path') || '',
+      price: 1000,
+      minRating: 0,
+      inStock: false,
+      search: params.get('q') || ''
+    };
   });
 
   const [sort, setSort] = useState('-createdAt');
@@ -106,17 +109,20 @@ export default function Discover({ setModalBook }) {
   const [page, setPage] = useState(1);
   const itemsPerPage = 12;
 
-  // Sync URL params to state on mount
+  // Sync URL params to state when they change
   useEffect(() => {
     const params = new URLSearchParams(location.search);
-    setFilters(prev => ({
-      ...prev,
-      category: params.get('category') || '',
-      mood: params.get('mood') || '',
-      problem: params.get('problem') || '',
-      path: params.get('path') || '',
-      search: params.get('q') || ''
-    }));
+    const newCat = params.get('category') || '';
+    const newMood = params.get('mood') || '';
+    const newSearch = params.get('q') || '';
+    
+    const timer = setTimeout(() => {
+      setFilters(prev => {
+        if (prev.category === newCat && prev.mood === newMood && prev.search === newSearch) return prev;
+        return { ...prev, category: newCat, mood: newMood, search: newSearch };
+      });
+    }, 0);
+    return () => clearTimeout(timer);
   }, [location.search]);
 
   // Derived Options
