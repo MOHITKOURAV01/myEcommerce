@@ -101,6 +101,6 @@ jobs:
       - name: Wait for services
         run: npx wait-on http://localhost:5173 http://localhost:5000/health
       - name: Run Cypress
-        uses: cypress-io/github-action@v6
+        uses: cypress-io/github-action@v7
         with:
           working-directory: e2e
