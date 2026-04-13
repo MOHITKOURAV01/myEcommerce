@@ -8,8 +8,28 @@ const sendEmail = require('../utils/sendEmail');
 // @desc    Register user
 // @route   POST /api/auth/register
 // @access  Public
+let mockUserSession = null;
+
+// @desc    Register user
+// @route   POST /api/auth/register
+// @access  Public
 const register = asyncHandler(async (req, res) => {
   const { name, email, password } = req.body;
+
+  if (process.env.USE_MOCK_DATA === 'true') {
+    const emailKey = email || 'mock@example.com';
+    mockUserSession = mockDb[emailKey] || {
+      _id: 'mock_user_' + Date.now(),
+      name: name || 'Mock User',
+      email: emailKey,
+      avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(name || 'User')}&background=random`,
+      role: 'user',
+      isEmailVerified: true,
+      addresses: []
+    };
+    mockDb[emailKey] = mockUserSession;
+    return sendTokens(res, mockUserSession, 201);
+  }
 
   if (!name || !email || !password) {
     res.status(400);
@@ -59,6 +79,21 @@ const register = asyncHandler(async (req, res) => {
 const login = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
 
+  if (process.env.USE_MOCK_DATA === 'true') {
+    const emailKey = email || 'mohitdas852@gmail.com';
+    mockUserSession = mockDb[emailKey] || {
+      _id: 'mock_user_login',
+      name: 'Mohit Kourav',
+      email: emailKey,
+      avatar: 'https://ui-avatars.com/api/?name=Mohit+Kourav&background=random',
+      role: 'admin',
+      isEmailVerified: true,
+      addresses: []
+    };
+    mockDb[emailKey] = mockUserSession;
+    return sendTokens(res, mockUserSession);
+  }
+
   if (!email || !password) {
     res.status(400);
     throw new Error('Please provide email and password');
@@ -100,6 +135,10 @@ const logout = asyncHandler(async (req, res) => {
     // Redis not available — token will expire naturally
   }
 
+  if (process.env.USE_MOCK_DATA === 'true') {
+    mockUserSession = null;
+  }
+
   // Clear refresh token cookie
   res.cookie('refreshToken', '', {
     httpOnly: true,
@@ -114,6 +153,13 @@ const logout = asyncHandler(async (req, res) => {
 // @route   POST /api/auth/refresh
 // @access  Public (with cookie)
 const refreshToken = asyncHandler(async (req, res) => {
+  if (process.env.USE_MOCK_DATA === 'true') {
+     if (!mockUserSession) {
+        res.status(401);
+        throw new Error('No mock session — please log in');
+     }
+     return res.status(200).json({ success: true, accessToken: 'mock_access_token', expiresIn: 3600 });
+  }
   const token = req.cookies?.refreshToken;
 
   if (!token) {
@@ -234,21 +280,48 @@ const verifyEmail = asyncHandler(async (req, res) => {
 // @route   GET /api/auth/me
 // @access  Private
 const getMe = asyncHandler(async (req, res) => {
+  if (process.env.USE_MOCK_DATA === 'true') {
+    if (!mockUserSession) {
+      res.status(401);
+      throw new Error('Not logged in');
+    }
+    return res.status(200).json({ success: true, data: mockUserSession });
+  }
   const user = await User.findById(req.user._id);
   res.status(200).json({ success: true, data: user });
 });
+
+// Persistent mock storage for session duration
+const mockDb = {};
 
 // @desc    Update profile
 // @route   PUT /api/auth/me
 // @access  Private
 const updateProfile = asyncHandler(async (req, res) => {
-  const { name, phone, avatar, preferences } = req.body;
+  const { name, phone, avatar, preferences, addresses } = req.body;
+
+  if (process.env.USE_MOCK_DATA === 'true') {
+    if (mockUserSession) {
+        if (name) mockUserSession.name = name;
+        if (phone) mockUserSession.phone = phone;
+        if (avatar) mockUserSession.avatar = avatar;
+        if (preferences) mockUserSession.preferences = preferences;
+        if (addresses) mockUserSession.addresses = addresses;
+        
+        // Save to our session-level mock DB
+        if (mockUserSession.email) {
+            mockDb[mockUserSession.email] = { ...mockUserSession };
+        }
+    }
+    return res.status(200).json({ success: true, data: mockUserSession });
+  }
 
   const fieldsToUpdate = {};
   if (name) fieldsToUpdate.name = name;
   if (phone) fieldsToUpdate.phone = phone;
   if (avatar) fieldsToUpdate.avatar = avatar;
   if (preferences) fieldsToUpdate.preferences = preferences;
+  if (addresses) fieldsToUpdate.addresses = addresses;
 
   const user = await User.findByIdAndUpdate(req.user._id, fieldsToUpdate, {
     new: true,
@@ -283,6 +356,202 @@ const changePassword = asyncHandler(async (req, res) => {
   sendTokens(res, user);
 });
 
+const { OAuth2Client } = require('google-auth-library');
+
+// @desc    Google OAuth Login
+// @route   POST /api/auth/google
+// @access  Public
+const googleLogin = asyncHandler(async (req, res) => {
+  const { credential } = req.body;
+
+  if (process.env.USE_MOCK_DATA === 'true') {
+    const emailKey = 'mock_google@example.com';
+    mockUserSession = mockDb[emailKey] || {
+      _id: 'mock_user_123',
+      name: 'Google Mock User',
+      email: emailKey,
+      avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=google',
+      role: 'user',
+      isEmailVerified: true,
+      oauthProvider: 'google',
+      addresses: []
+    };
+    mockDb[emailKey] = mockUserSession;
+    return sendTokens(res, mockUserSession, 200);
+  }
+
+  if (!credential) {
+    res.status(400);
+    throw new Error('Google credential is required');
+  }
+
+  // Verify the Google token
+  const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+
+  let payload;
+  try {
+    const ticket = await client.verifyIdToken({
+      idToken: credential,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
+    payload = ticket.getPayload();
+  } catch (err) {
+    res.status(401);
+    throw new Error('Invalid Google token. Please try again.');
+  }
+
+  // Extract user info from Google
+  const {
+    sub: googleId,        // Unique Google user ID
+    email,
+    name,
+    picture: avatar,
+    email_verified,
+  } = payload;
+
+  if (!email_verified) {
+    res.status(400);
+    throw new Error('Google email is not verified');
+  }
+
+  // Check if user already exists
+  let user = await User.findOne({ email });
+
+  if (user) {
+    // User exists — check if they registered with email/password
+    if (user.oauthProvider === 'local') {
+      // They registered with email — link their Google account
+      user.oauthProvider = 'google';
+      user.oauthId = googleId;
+      if (!user.avatar && avatar) user.avatar = avatar;
+      await user.save({ validateBeforeSave: false });
+    }
+    // User already has Google OAuth — just login
+  } else {
+    // New user — create account
+    user = await User.create({
+      name,
+      email,
+      avatar,
+      oauthProvider: 'google',
+      oauthId: googleId,
+      isEmailVerified: true,    // Google already verified the email
+      password: undefined,      // No password for OAuth users
+    });
+  }
+
+  // Issue JWT tokens (same as regular login)
+  sendTokens(res, user, 200);
+});
+
+// @desc    Google login via userinfo (access_token flow)
+// @route   POST /api/auth/google-token
+// @access  Public
+const googleLoginWithToken = asyncHandler(async (req, res) => {
+  const { googleId, email, name, avatar, emailVerified } = req.body;
+
+  if (process.env.USE_MOCK_DATA === 'true') {
+    const emailKey = email || 'google@example.com';
+    mockUserSession = mockDb[emailKey] || {
+      _id: 'mock_google_' + (googleId || Date.now()),
+      name: name || 'Google User',
+      email: emailKey,
+      avatar: avatar || 'https://ui-avatars.com/api/?name=G&background=random',
+      role: 'user',
+      isEmailVerified: true,
+      oauthProvider: 'google',
+      addresses: []
+    };
+    mockDb[emailKey] = mockUserSession;
+    return sendTokens(res, mockUserSession, 200);
+  }
+
+  if (!email || !googleId) {
+    res.status(400);
+    throw new Error('Google user info is incomplete');
+  }
+
+  if (!emailVerified) {
+    res.status(400);
+    throw new Error('Google email is not verified');
+  }
+
+  // Find or create user
+  let user = await User.findOne({ email });
+
+  if (user) {
+    // Link Google to existing account if needed
+    if (!user.oauthId) {
+      user.oauthId = googleId;
+      user.oauthProvider = 'google';
+      if (!user.avatar && avatar) user.avatar = avatar;
+      await user.save({ validateBeforeSave: false });
+    }
+  } else {
+    // Create new user from Google
+    user = await User.create({
+      name,
+      email,
+      avatar: avatar || '',
+      oauthProvider: 'google',
+      oauthId: googleId,
+      isEmailVerified: true,
+      password: undefined,
+    });
+  }
+
+  sendTokens(res, user, 200);
+});
+
+// @desc    Send OTP to phone
+// @route   POST /api/auth/send-otp
+// @access  Public
+const sendOTP = asyncHandler(async (req, res) => {
+    const { phone } = req.body;
+    if (!phone) {
+        res.status(400);
+        throw new Error('Phone number is required');
+    }
+
+    if (process.env.USE_MOCK_DATA === 'true') {
+        return res.status(200).json({ success: true, message: `Mock OTP sent to ${phone}. Code: 123456` });
+    }
+
+    // Real SMS logic would go here (Twilio, etc.)
+    res.status(200).json({ success: true, message: 'OTP sent successfully' });
+});
+
+// @desc    Verify OTP and login
+// @route   POST /api/auth/verify-otp
+// @access  Public
+const verifyOTP = asyncHandler(async (req, res) => {
+    const { phone, otp } = req.body;
+
+    if (process.env.USE_MOCK_DATA === 'true') {
+        if (otp === '123456') {
+            const emailKey = (phone || 'user') + '@phone.com';
+            mockUserSession = mockDb[emailKey] || {
+                _id: 'mock_user_' + (phone ? phone.replace(/\D/g, '') : Date.now()),
+                name: 'User ' + (phone || ''),
+                email: emailKey,
+                phone: phone,
+                role: 'user',
+                isEmailVerified: true,
+                avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(phone || 'U')}&background=random`,
+                addresses: []
+            };
+            mockDb[emailKey] = mockUserSession;
+            return sendTokens(res, mockUserSession, 200);
+        } else {
+            res.status(400);
+            throw new Error('Invalid OTP');
+        }
+    }
+
+    // Real verification logic here
+    res.status(200).json({ success: true });
+});
+
 module.exports = {
   register,
   login,
@@ -294,4 +563,8 @@ module.exports = {
   getMe,
   updateProfile,
   changePassword,
+  googleLogin,
+  googleLoginWithToken,
+  sendOTP,
+  verifyOTP
 };
