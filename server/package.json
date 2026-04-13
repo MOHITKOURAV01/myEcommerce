@@ -12,7 +12,11 @@
     "lint": "eslint . --ext .js",
     "seed": "node data/seedData.js"
   },
-  "keywords": ["booksmart", "ecommerce", "bookshop"],
+  "keywords": [
+    "booksmart",
+    "ecommerce",
+    "bookshop"
+  ],
   "author": "Mohit Kourav",
   "license": "MIT",
   "type": "commonjs",
@@ -27,6 +31,7 @@
     "express-mongo-sanitize": "^2.2.0",
     "express-rate-limit": "^8.3.1",
     "express-validator": "^7.3.1",
+    "google-auth-library": "^10.6.2",
     "helmet": "^8.1.0",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^9.1.6",
@@ -46,7 +51,9 @@
   },
   "jest": {
     "testEnvironment": "node",
-    "setupFilesAfterEnv": ["<rootDir>/tests/setup.js"],
+    "setupFilesAfterEnv": [
+      "<rootDir>/tests/setup.js"
+    ],
     "coverageDirectory": "coverage",
     "testTimeout": 30000
   }
