@@ -3,52 +3,71 @@ const Cart = require('../models/Cart');
 const Book = require('../models/Book');
 const asyncHandler = require('../utils/asyncHandler');
 
+const seedData = require('../data/seedData');
+const mockBooks = seedData.map((b, i) => ({ ...b, _id: i.toString() }));
+const MOCK_WISHLISTS = new Map(); // userId -> Set of bookIds
+
 // @desc    Get user wishlist
 // @route   GET /api/wishlist
 // @access  Private
 const getWishlist = asyncHandler(async (req, res) => {
+  if (process.env.USE_MOCK_DATA === 'true') {
+     const ids = MOCK_WISHLISTS.get(req.user._id) || new Set();
+     const books = mockBooks.filter(b => ids.has(b._id) || ids.has(b.slug));
+     return res.status(200).json({ success: true, data: { books } });
+  }
+
   let wishlist = await Wishlist.findOne({ user: req.user._id })
-    .populate('books', 'title coverUrl price rating numReviews slug author');
+    .populate('books', 'title author price originalPrice coverUrl slug inStock rating numReviews');
 
   if (!wishlist) {
     wishlist = await Wishlist.create({ user: req.user._id, books: [] });
   }
 
-  res.status(200).json({ success: true, count: wishlist.books.length, data: wishlist });
+  res.status(200).json({
+    success: true,
+    data: {
+      books: wishlist.books || []
+    }
+  });
 });
 
 // @desc    Toggle book in wishlist
-// @route   POST /api/wishlist/:bookId
+// @route   POST /api/wishlist
 // @access  Private
 const toggleWishlist = asyncHandler(async (req, res) => {
-  const { bookId } = req.params;
-  const book = await Book.findById(bookId);
+  const { bookId } = req.body;
+  if (!bookId) { res.status(400); throw new Error('bookId required'); }
 
-  if (!book) {
-    res.status(404);
-    throw new Error('Book not found');
+  if (process.env.USE_MOCK_DATA === 'true') {
+    let ids = MOCK_WISHLISTS.get(req.user._id);
+    if (!ids) { ids = new Set(); MOCK_WISHLISTS.set(req.user._id, ids); }
+    
+    let inWishlist = false;
+    if (ids.has(bookId)) {
+        ids.delete(bookId);
+        inWishlist = false;
+    } else {
+        ids.add(bookId);
+        inWishlist = true;
+    }
+    const books = mockBooks.filter(b => ids.has(b._id) || ids.has(b.slug));
+    return res.json({ success: true, data: { books, inWishlist } });
   }
 
   let wishlist = await Wishlist.findOne({ user: req.user._id });
-  if (!wishlist) {
-    wishlist = new Wishlist({ user: req.user._id, books: [] });
-  }
+  if (!wishlist) wishlist = new Wishlist({ user: req.user._id, books: [] });
 
-  const index = wishlist.books.indexOf(bookId);
-  let action = '';
-
-  if (index === -1) {
-    wishlist.books.push(bookId);
-    action = 'added';
+  const isInWishlist = wishlist.books.some(id => id.toString() === bookId);
+  if (isInWishlist) {
+    wishlist.books = wishlist.books.filter(id => id.toString() !== bookId);
   } else {
-    wishlist.books.splice(index, 1);
-    action = 'removed';
+    wishlist.books.push(bookId);
   }
-
   await wishlist.save();
-  await wishlist.populate('books', 'title coverUrl price rating numReviews slug author');
+  await wishlist.populate('books', 'title author price coverUrl slug inStock');
 
-  res.status(200).json({ success: true, action, data: wishlist });
+  res.json({ success: true, data: { books: wishlist.books, inWishlist: !isInWishlist } });
 });
 
 // @desc    Remove book from wishlist
@@ -56,6 +75,13 @@ const toggleWishlist = asyncHandler(async (req, res) => {
 // @access  Private
 const removeFromWishlist = asyncHandler(async (req, res) => {
   const { bookId } = req.params;
+
+  if (process.env.USE_MOCK_DATA === 'true') {
+    const ids = MOCK_WISHLISTS.get(req.user._id);
+    if (ids) ids.delete(bookId);
+    const books = seedData.filter(b => ids?.has(b._id.toString()) || ids?.has(b.slug));
+    return res.status(200).json({ success: true, data: { books } });
+  }
 
   const wishlist = await Wishlist.findOne({ user: req.user._id });
   if (!wishlist) {
