@@ -10,8 +10,11 @@ const { apiLimiter, authLimiter } = require('./middleware/rateLimiter');
 const app = express();
 
 // Connect to Databases
+console.log('Mode:', process.env.NODE_ENV, 'Mock Data:', process.env.USE_MOCK_DATA);
 if (process.env.USE_MOCK_DATA !== 'true' && process.env.NODE_ENV !== 'test') {
   connectDB();
+} else {
+  console.log('Skipping MongoDB connection (Mock Mode Active)');
 }
 
 // ─── Security Middleware ────────────────────────
@@ -76,7 +79,7 @@ app.use(notFound);
 app.use(errorHandler);
 
 // ─── Start Server ───────────────────────────────
-const PORT = process.env.PORT || 5001;
+const PORT = process.env.PORT || 5000;
 if (process.env.NODE_ENV !== 'test') {
   app.listen(PORT, () => {
     console.log(`\n📚 BookSmart API running on port ${PORT}`);
