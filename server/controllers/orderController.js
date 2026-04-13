@@ -7,6 +7,41 @@ const ApiFeatures = require('../utils/apiFeatures');
 // @route   GET /api/orders
 // @access  Private
 const getMyOrders = asyncHandler(async (req, res) => {
+  if (process.env.USE_MOCK_DATA === 'true') {
+    return res.status(200).json({
+      success: true,
+      count: 2,
+      total: 2,
+      page: 1,
+      totalPages: 1,
+      data: [
+        {
+          _id: 'mock_order_1',
+          orderNumber: 'ORD-2026-6789',
+          createdAt: new Date(),
+          status: 'delivered',
+          pricing: { total: 1250 },
+          items: [
+            { title: 'The Arcane Wisdom', author: 'Elias Thorne', coverUrl: 'https://placehold.co/400x600/2C1F0E/F2E4C8?text=Arcane+Wisdom' },
+            { title: 'Midnight City', author: 'Sarah J. Maas', coverUrl: 'https://placehold.co/400x600/2C1F0E/F2E4C8?text=Midnight+City' }
+          ],
+          payment: { method: 'cod', status: 'paid' }
+        },
+        {
+          _id: 'mock_order_2',
+          orderNumber: 'ORD-2026-1234',
+          createdAt: new Date(Date.now() - 86400000 * 2),
+          status: 'shipped',
+          pricing: { total: 450 },
+          items: [
+            { title: 'The Lost Chronicles', author: 'T.K. Peterson', coverUrl: 'https://placehold.co/400x600/2C1F0E/F2E4C8?text=Lost+Chronicles' }
+          ],
+          payment: { method: 'upi', status: 'paid' }
+        }
+      ]
+    });
+  }
+
   const page = parseInt(req.query.page, 10) || 1;
   const limit = parseInt(req.query.limit, 10) || 10;
   const skip = (page - 1) * limit;
@@ -33,6 +68,25 @@ const getMyOrders = asyncHandler(async (req, res) => {
 // @route   GET /api/orders/:id
 // @access  Private
 const getOrder = asyncHandler(async (req, res) => {
+  if (process.env.USE_MOCK_DATA === 'true') {
+    return res.status(200).json({
+      success: true,
+      data: {
+        _id: req.params.id,
+        orderNumber: 'ORD-2026-DETAIL',
+        status: 'delivered',
+        createdAt: new Date(),
+        shippingAddress: { fullName: 'Mohit Kourav', line1: '123 Book Lane', city: 'Gwalior', state: 'MP', pincode: '474001' },
+        pricing: { total: 1250, subtotal: 1200, shipping: 50 },
+        items: [
+           { book: { title: 'The Arcane Wisdom', author: 'Elias Thorne', coverUrl: 'https://placehold.co/400x600/2C1F0E/F2E4C8?text=Arcane+Wisdom' }, price: 600, quantity: 2 }
+        ],
+        payment: { method: 'cod', status: 'paid' },
+        statusHistory: [{ status: 'placed', date: new Date() }, { status: 'delivered', date: new Date() }]
+      }
+    });
+  }
+
   const order = await Order.findById(req.params.id)
     .populate('items.book', 'title author coverUrl')
     .populate('user', 'name email');
