@@ -76,6 +76,24 @@ const authService = {
         } catch (err) {
             throw err;
         }
+    },
+
+    googleLogin: async (credential) => {
+        // credential = Google ID token from @react-oauth/google
+        const { data } = await api.post('/auth/google', { credential });
+        setAccessToken(data.accessToken);
+        return data;
+    },
+    
+    sendOTP: async (phone) => {
+        const { data } = await api.post('/auth/send-otp', { phone });
+        return data;
+    },
+
+    verifyOTP: async (phone, otp) => {
+        const { data } = await api.post('/auth/verify-otp', { phone, otp });
+        setAccessToken(data.accessToken);
+        return data;
     }
 };
 
