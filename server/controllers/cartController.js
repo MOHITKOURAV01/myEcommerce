@@ -33,10 +33,46 @@ const calcCartTotals = (items, coupon = null) => {
   return { subtotal, couponDiscount, shipping, tax, total };
 };
 
+const seedData = require('../data/seedData');
+// Sync with bookController mapping
+const mockBooks = seedData.map((b, i) => ({ ...b, _id: i.toString() }));
+
+// --- Mock Store for development without MongoDB ---
+const MOCK_CARTS = new Map(); // userId -> cart object
+
+const getMockCart = (userId) => {
+  if (!MOCK_CARTS.has(userId)) {
+    MOCK_CARTS.set(userId, { items: [], appliedCoupon: null });
+  }
+  const cart = MOCK_CARTS.get(userId);
+  
+  // Populate items with full book data from mockBooks for the frontend
+  const populatedItems = cart.items.map(item => {
+    const book = mockBooks.find(b => 
+        b._id === item.bookId || 
+        b.isbn === item.bookId || 
+        (b.slug && b.slug === item.bookId) ||
+        (b.title && item.bookId && b.title.toLowerCase().includes(item.bookId.toLowerCase()))
+    );
+    return {
+      ...item,
+      book: book || { title: 'Book Loading...', price: item.price, coverUrl: '' }
+    };
+  });
+
+  const totals = calcCartTotals(populatedItems, cart.appliedCoupon);
+  return { ...cart, items: populatedItems, ...totals };
+};
+
 // @desc    Get user cart
 // @route   GET /api/cart
 // @access  Private
 const getCart = asyncHandler(async (req, res) => {
+  if (process.env.USE_MOCK_DATA === 'true') {
+    const cart = getMockCart(req.user._id);
+    return res.status(200).json({ success: true, data: cart });
+  }
+
   let cart = await Cart.findOne({ user: req.user._id })
     .populate('items.book', 'title coverUrl price stock slug author');
 
@@ -44,12 +80,10 @@ const getCart = asyncHandler(async (req, res) => {
     cart = await Cart.create({ user: req.user._id, items: [] });
   }
 
-  // Populate coupon if applied
   if (cart.appliedCoupon) {
     await cart.populate('appliedCoupon');
   }
 
-  // Recalculate totals dynamically
   const totals = calcCartTotals(cart.items, cart.appliedCoupon);
 
   res.status(200).json({
@@ -66,6 +100,31 @@ const getCart = asyncHandler(async (req, res) => {
 // @access  Private
 const addToCart = asyncHandler(async (req, res) => {
   const { bookId, quantity = 1 } = req.body;
+
+  if (process.env.USE_MOCK_DATA === 'true') {
+    const cart = MOCK_CARTS.get(req.user._id) || { items: [], appliedCoupon: null };
+    const book = mockBooks.find(b => b._id === bookId || b.slug === bookId);
+    
+    if (!book) {
+      res.status(404);
+      throw new Error('Book not found in archives');
+    }
+
+    const existingIdx = cart.items.findIndex(i => i.bookId === bookId);
+    if (existingIdx > -1) {
+      cart.items[existingIdx].quantity += quantity;
+    } else {
+      cart.items.push({
+        bookId,
+        quantity,
+        price: book.price
+      });
+    }
+    
+    MOCK_CARTS.set(req.user._id, cart);
+    const populated = getMockCart(req.user._id);
+    return res.status(200).json({ success: true, data: populated });
+  }
 
   const book = await Book.findById(bookId);
   if (!book) {
@@ -86,22 +145,17 @@ const addToCart = asyncHandler(async (req, res) => {
   const existingItemIndex = cart.items.findIndex(item => item.book.toString() === bookId);
 
   if (existingItemIndex > -1) {
-    // Increment quantity, check limits
     const newQty = cart.items[existingItemIndex].quantity + quantity;
     if (newQty > 10) {
       res.status(400);
       throw new Error('Maximum quantity per item is 10');
-    }
-    if (newQty > book.stock) {
-      res.status(400);
-      throw new Error('Requested quantity exceeds available stock');
     }
     cart.items[existingItemIndex].quantity = newQty;
   } else {
     cart.items.push({
       book: bookId,
       quantity,
-      price: book.price // freeze price at time of adding
+      price: book.price
     });
   }
 
@@ -123,6 +177,16 @@ const addToCart = asyncHandler(async (req, res) => {
 const updateCartItem = asyncHandler(async (req, res) => {
   const { quantity } = req.body;
   const bookId = req.params.bookId;
+
+  if (process.env.USE_MOCK_DATA === 'true') {
+     const cart = MOCK_CARTS.get(req.user._id);
+     const item = cart?.items.find(i => i.bookId === bookId);
+     if (item) {
+        item.quantity = quantity;
+        MOCK_CARTS.set(req.user._id, cart);
+     }
+     return res.status(200).json({ success: true, data: getMockCart(req.user._id) });
+  }
 
   if (quantity < 1 || quantity > 10) {
     res.status(400);
@@ -164,6 +228,15 @@ const updateCartItem = asyncHandler(async (req, res) => {
 // @route   DELETE /api/cart/:bookId
 // @access  Private
 const removeFromCart = asyncHandler(async (req, res) => {
+  if (process.env.USE_MOCK_DATA === 'true') {
+    const cart = MOCK_CARTS.get(req.user._id);
+    if (cart) {
+        cart.items = cart.items.filter(i => i.bookId !== req.params.bookId);
+        MOCK_CARTS.set(req.user._id, cart);
+    }
+    return res.status(200).json({ success: true, data: getMockCart(req.user._id) });
+  }
+
   const cart = await Cart.findOne({ user: req.user._id });
   if (!cart) {
     res.status(404);
@@ -187,6 +260,11 @@ const removeFromCart = asyncHandler(async (req, res) => {
 // @route   DELETE /api/cart
 // @access  Private
 const clearCart = asyncHandler(async (req, res) => {
+  if (process.env.USE_MOCK_DATA === 'true') {
+    MOCK_CARTS.set(req.user._id, { items: [], appliedCoupon: null });
+    return res.status(200).json({ success: true, data: { items: [], subtotal: 0, total: 0 } });
+  }
+
   const cart = await Cart.findOne({ user: req.user._id });
   if (cart) {
     cart.items = [];
