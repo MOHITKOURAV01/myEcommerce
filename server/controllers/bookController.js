@@ -7,7 +7,7 @@ const ApiFeatures = require('../utils/apiFeatures');
 // @route   GET /api/books
 // @access  Public
 const seedData = require('../data/seedData');
-const mockBooks = seedData.map((b, i) => ({ ...b, _id: i.toString(), category: { name: b.category, slug: b.category } }));
+const mockBooks = seedData.map((b, i) => ({ ...b, _id: i.toString(), inStock: true, category: { name: b.category, slug: b.category } }));
 
 const getBooks = asyncHandler(async (req, res) => {
   if (process.env.USE_MOCK_DATA === 'true' && process.env.NODE_ENV !== 'test') {
@@ -98,13 +98,21 @@ const searchBooks = asyncHandler(async (req, res) => {
 });
 
 const getSimilarBooks = asyncHandler(async (req, res) => {
-  if (process.env.USE_MOCK_DATA === 'true' && process.env.NODE_ENV !== 'test') {
-    return res.status(200).json({ success: true, count: 6, data: mockBooks.slice(0, 6) });
-  }
   const book = await Book.findById(req.params.id);
   if (!book) { res.status(404); throw new Error('Book not found'); }
-  const similar = await Book.find({ category: book.category, _id: { $ne: book._id } }).limit(6);
-  res.status(200).json({ success: true, count: similar.length, data: similar });
+
+  const similar = await Book.find({
+    _id: { $ne: book._id },
+    $or: [
+      { category: book.category },
+      { moods: { $in: book.moods } },
+    ]
+  })
+  .sort('-rating')
+  .limit(6)
+  .populate('category', 'name slug');
+
+  res.json({ success: true, data: similar });
 });
 
 const getBooksByCategory = asyncHandler(async (req, res) => {
@@ -127,6 +135,15 @@ const getBookBySlug = asyncHandler(async (req, res) => {
   const book = await Book.findOne({ slug: req.params.slug }).populate('category', 'name slug');
   if (!book) { res.status(404); throw new Error('Book not found'); }
   res.status(200).json({ success: true, data: book });
+});
+
+const getRecommendedBooks = asyncHandler(async (req, res) => {
+  if (process.env.USE_MOCK_DATA === 'true' && process.env.NODE_ENV !== 'test') {
+    const recommended = mockBooks.slice(0, 8);
+    return res.status(200).json({ success: true, count: recommended.length, data: recommended });
+  }
+  const books = await Book.find({ featured: true }).sort('-rating').limit(8).populate('category', 'name slug');
+  res.status(200).json({ success: true, count: books.length, data: books });
 });
 
 
@@ -198,6 +215,7 @@ module.exports = {
   getTrendingBooks,
   getNewArrivals,
   getBestsellers,
+  getRecommendedBooks,
   searchBooks,
   getSimilarBooks,
   getBooksByCategory,
