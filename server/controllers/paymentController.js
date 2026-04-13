@@ -124,7 +124,7 @@ const confirmPaymentAndCreateOrder = asyncHandler(async (req, res) => {
       couponDiscount: totals.couponDiscount,
       shipping: totals.shipping,
       tax: totals.tax,
-      total: totals.MathRoundTotal
+      total: totals.total
     },
     coupon: cart.appliedCoupon ? cart.appliedCoupon._id : undefined,
     status: 'confirmed'
@@ -204,12 +204,11 @@ const createCODOrder = asyncHandler(async (req, res) => {
       status: 'pending'
     },
     pricing: {
-      subtotal: totals.subtotal || 0,
-      discount: 0,
-      couponDiscount: totals.couponDiscount || 0,
-      shipping: totals.shipping || 0,
-      tax: totals.tax || 0,
-      total: totals.total || 0,
+      subtotal: totals.subtotal,
+      couponDiscount: totals.couponDiscount,
+      shipping: totals.shipping,
+      tax: totals.tax,
+      total: totals.total
     },
     coupon: cart.appliedCoupon ? cart.appliedCoupon._id : undefined,
     status: 'placed'
