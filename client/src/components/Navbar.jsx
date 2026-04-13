@@ -3,14 +3,13 @@ import { NavLink, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaSearch, FaHeart, FaShoppingBag, FaUserCircle, FaBars, FaTimes } from 'react-icons/fa';
 import { useAuth, useCart, useWishlist, useSearch } from '../hooks/index_hooks';
-import { formatPrice } from '../utils/site_utils';
 
 export default function Navbar({ onAuthClick }) {
     const navigate = useNavigate();
-    const { user, isAuthenticated, login, logout, isAdmin } = useAuth();
+    const { user, isAuthenticated, logout, isAdmin } = useAuth();
     const { itemCount, openDrawer } = useCart();
     const { wishlist } = useWishlist();
-    const { query, results, isSearching, handleQueryChange } = useSearch(300);
+    const { query, results, handleQueryChange } = useSearch(300);
 
     const [isScrolled, setIsScrolled] = useState(false);
     const [showUserMenu, setShowUserMenu] = useState(false);

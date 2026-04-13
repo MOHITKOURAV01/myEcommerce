@@ -124,22 +124,22 @@ export const BookCard3D = ({ book, view = 'grid', onQuickView }) => {
                     <motion.div
                         whileHover={{ scale: 1.15, rotate: 5 }}
                         whileTap={{ scale: 0.9 }}
-                        onClick={(e) => { 
-                            e.stopPropagation(); 
-                            toggleWishlist(book._id); 
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            toggleWishlist(book._id);
                         }}
-                        style={{ 
-                            background: 'rgba(255,255,255,0.05)', 
+                        style={{
+                            background: 'rgba(255,255,255,0.05)',
                             backdropFilter: 'blur(10px)',
                             border: '1px solid rgba(255,255,255,0.2)',
-                            color: isWished ? 'var(--terra)' : 'white', 
-                            width: '42px', 
-                            height: '42px', 
-                            borderRadius: '14px', 
-                            display: 'flex', 
-                            alignItems: 'center', 
-                            justifyContent: 'center', 
-                            boxShadow: '0 8px 32px rgba(0,0,0,0.3)', 
+                            color: isWished ? 'var(--terra)' : 'white',
+                            width: '42px',
+                            height: '42px',
+                            borderRadius: '14px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
                             cursor: 'pointer',
                             fontSize: '18px'
                         }}
@@ -161,10 +161,10 @@ export const BookCard3D = ({ book, view = 'grid', onQuickView }) => {
                     <button
                         className="clay-btn btn-primary"
                         style={{ width: '100%', fontSize: '13px', padding: '12px', boxShadow: '0 8px 20px rgba(0,0,0,0.4)', transition: 'none' }}
-                        onClick={(e) => { 
-                            e.stopPropagation(); 
-                            addToCart(book._id); 
-                            openDrawer(); 
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            addToCart(book._id);
+                            openDrawer();
                         }}
                     >
                         Add to Cart
@@ -208,8 +208,6 @@ export const CartDrawer = () => {
     };
 
     const shipping = totals.subtotal > 1000 || totals.subtotal === 0 ? 0 : 99;
-    const tax = totals.tax || 0;
-    const total = totals.total || 0;
 
     return (
         <AnimatePresence>
@@ -249,8 +247,8 @@ export const CartDrawer = () => {
                         }}
                     >
                         {/* Header */}
-                        <div className="flex-between" style={{ 
-                            padding: '40px 32px 32px 32px', 
+                        <div className="flex-between" style={{
+                            padding: '40px 32px 32px 32px',
                             background: 'linear-gradient(to bottom, var(--interior), var(--interior-2))',
                             borderBottom: '4px solid #3A1A08'
                         }}>
@@ -268,7 +266,7 @@ export const CartDrawer = () => {
                         <div style={{ flex: 1, overflowY: 'auto', padding: '32px' }} className="hide-scrollbar">
                             {items.length === 0 ? (
                                 <div className="flex-center" style={{ height: '100%', flexDirection: 'column', gap: '24px', textAlign: 'center' }}>
-                                    <motion.div 
+                                    <motion.div
                                         animate={{ y: [0, -15, 0] }}
                                         transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
                                         style={{ fontSize: '100px', filter: 'drop-shadow(0 20px 30px rgba(0,0,0,0.5))' }}
@@ -284,8 +282,8 @@ export const CartDrawer = () => {
                             ) : (
                                 <div className="flex-col" style={{ gap: '20px' }}>
                                     {items.map(item => (
-                                        <motion.div 
-                                            key={item.book._id} 
+                                        <motion.div
+                                            key={item.book._id}
                                             layout
                                             initial={{ opacity: 0, x: 20 }}
                                             animate={{ opacity: 1, x: 0 }}
@@ -293,11 +291,11 @@ export const CartDrawer = () => {
                                             style={{ background: 'rgba(255,255,255,0.02)', borderRadius: '24px' }}
                                         >
                                             <div style={{ position: 'relative', flexShrink: 0 }}>
-                                                <img 
-                                                    onClick={() => handleNavigate(`/book/${item.book.slug}`)} 
-                                                    src={item.book.coverUrl} 
-                                                    style={{ width: '85px', height: '120px', objectFit: 'cover', borderRadius: '12px', boxShadow: '0 10px 25px rgba(0,0,0,0.5)', cursor: 'pointer', border: '1px solid rgba(255,255,255,0.1)' }} 
-                                                    alt={item.book.title} 
+                                                <img
+                                                    onClick={() => handleNavigate(`/book/${item.book.slug}`)}
+                                                    src={item.book.coverUrl}
+                                                    style={{ width: '85px', height: '120px', objectFit: 'cover', borderRadius: '12px', boxShadow: '0 10px 25px rgba(0,0,0,0.5)', cursor: 'pointer', border: '1px solid rgba(255,255,255,0.1)' }}
+                                                    alt={item.book.title}
                                                 />
                                             </div>
                                             <div className="flex-col" style={{ flex: 1, gap: '4px', overflow: 'hidden' }}>
@@ -305,17 +303,17 @@ export const CartDrawer = () => {
                                                     <p onClick={() => handleNavigate(`/book/${item.book.slug}`)} className="truncate font-black text-cream text-[17px] cursor-pointer hover:text-primary transition-colors leading-tight" title={item.book.title}>{item.book.title}</p>
                                                     <p className="text-cream/40 text-[11px] font-bold uppercase tracking-widest">{item.book.author}</p>
                                                 </div>
-                                                
+
                                                 <div className="flex items-center gap-4 mt-3">
                                                     <span className="text-mint font-black text-xl">₹{item.book.price}</span>
                                                     <div className="flex items-center bg-forest/20 rounded-full border border-white/5 p-1">
-                                                        <button 
-                                                            onClick={() => updateQty(item.book._id, item.quantity - 1)} 
+                                                        <button
+                                                            onClick={() => updateQty(item.book._id, item.quantity - 1)}
                                                             className="w-7 h-7 rounded-full flex-center text-terra hover:bg-terra/10 transition-all font-black"
                                                         >－</button>
                                                         <span className="w-8 text-center font-black text-cream text-sm">{item.quantity}</span>
-                                                        <button 
-                                                            onClick={() => updateQty(item.book._id, Math.min(10, item.quantity + 1))} 
+                                                        <button
+                                                            onClick={() => updateQty(item.book._id, Math.min(10, item.quantity + 1))}
                                                             className="w-7 h-7 rounded-full flex-center text-mint hover:bg-mint/10 transition-all font-black"
                                                         >＋</button>
                                                     </div>
@@ -336,8 +334,8 @@ export const CartDrawer = () => {
                         </div>
 
                         {/* Footer Summary */}
-                        <div className="bg-interior-2" style={{ 
-                            padding: '32px', 
+                        <div className="bg-interior-2" style={{
+                            padding: '32px',
                             borderTop: '5px solid #3A1A08',
                             background: 'linear-gradient(to top, #2C1810, var(--interior))',
                             boxShadow: '0 -20px 40px rgba(0,0,0,0.3)'

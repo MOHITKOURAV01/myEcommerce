@@ -2,23 +2,15 @@ import api, { setAccessToken } from './api';
 
 const authService = {
     login: async (credentials) => {
-        try {
-            const { data } = await api.post('/auth/login', credentials);
-            setAccessToken(data.accessToken);
-            return data;
-        } catch (err) {
-            throw err;
-        }
+        const { data } = await api.post('/auth/login', credentials);
+        setAccessToken(data.accessToken);
+        return data;
     },
 
     register: async (userData) => {
-        try {
-            const { data } = await api.post('/auth/register', userData);
-            setAccessToken(data.accessToken);
-            return data;
-        } catch (err) {
-            throw err;
-        }
+        const { data } = await api.post('/auth/register', userData);
+        setAccessToken(data.accessToken);
+        return data;
     },
 
     logout: async () => {
@@ -43,39 +35,23 @@ const authService = {
     },
 
     getMe: async () => {
-        try {
-            const { data } = await api.get('/auth/me');
-            return data;
-        } catch (err) {
-            throw err;
-        }
+        const { data } = await api.get('/auth/me');
+        return data;
     },
 
     updateMe: async (profileData) => {
-        try {
-            const { data } = await api.put('/auth/me', profileData);
-            return data;
-        } catch (err) {
-            throw err;
-        }
+        const { data } = await api.put('/auth/me', profileData);
+        return data;
     },
 
     forgotPassword: async (email) => {
-        try {
-            const { data } = await api.post('/auth/forgotpassword', { email });
-            return data;
-        } catch (err) {
-            throw err;
-        }
+        const { data } = await api.post('/auth/forgotpassword', { email });
+        return data;
     },
 
     resetPassword: async (token, password) => {
-        try {
-            const { data } = await api.put(`/auth/resetpassword/${token}`, { password });
-            return data;
-        } catch (err) {
-            throw err;
-        }
+        const { data } = await api.put(`/auth/resetpassword/${token}`, { password });
+        return data;
     },
 
     googleLogin: async (credential) => {

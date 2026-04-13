@@ -110,7 +110,9 @@ function MainLayout() {
   // Listen for openAuth state from Redirects
   useEffect(() => {
     if (location.state?.openAuth) {
-      setAuthModal({ open: true, type: location.state.openAuth });
+      setTimeout(() => {
+        setAuthModal({ open: true, type: location.state.openAuth });
+      }, 0);
       // Clear state
       window.history.replaceState({}, document.title);
     }
