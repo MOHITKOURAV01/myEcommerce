@@ -7,15 +7,15 @@ export const cartService = {
         return data;
     },
     addItem: async (bookId, quantity = 1) => {
-        const { data } = await api.post('/cart/items', { bookId, quantity });
+        const { data } = await api.post('/cart', { bookId, quantity });
         return data;
     },
     updateItem: async (bookId, quantity) => {
-        const { data } = await api.put(`/cart/items/${bookId}`, { quantity });
+        const { data } = await api.put(`/cart/${bookId}`, { quantity });
         return data;
     },
     removeItem: async (bookId) => {
-        const { data } = await api.delete(`/cart/items/${bookId}`);
+        const { data } = await api.delete(`/cart/${bookId}`);
         return data;
     },
     clearCart: async () => {
@@ -23,11 +23,11 @@ export const cartService = {
         return data;
     },
     applyCoupon: async (code) => {
-        const { data } = await api.post('/cart/coupon', { code });
+        const { data } = await api.post('/cart/apply-coupon', { code });
         return data;
     },
     removeCoupon: async () => {
-        const { data } = await api.delete('/cart/coupon');
+        const { data } = await api.delete('/cart/remove-coupon');
         return data;
     }
 };
@@ -67,7 +67,7 @@ export const paymentService = {
         return data;
     },
     placeCoD: async (orderData) => {
-        const { data } = await api.post('/payment/place-cod', orderData);
+        const { data } = await api.post('/payment/cod', orderData);
         return data;
     }
 };
