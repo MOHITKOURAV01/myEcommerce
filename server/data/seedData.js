@@ -1,3 +1,12 @@
+const REAL_ISBNS = [
+  '9780735211292', '9781455586691', '9780525559474', '9781612680194', 
+  '9780671027032', '9780070481718', '9780062315007', '9788173711466',
+  '9781585424337', '9780735204553', '9780804139021', '9780008312831',
+  '9780345472328', '9780062316097', '9780062457714', '9781544512266',
+  '9781591846444', '9780857197689', '9780743269513', '9780066620992',
+  '9788179921623', '9781626569416', '9780671791544'
+];
+
 const generateBook = (
   title, author, isbn, category, price, 
   originalPrice, ds, moods, problems, 
@@ -12,6 +21,11 @@ const generateBook = (
     .replace(/-+$/,'');
   }
 
+  // Use a real ISBN cover if this is a dummy ISBN to ensure images show up
+  const displayIsbn = isbn.startsWith('978100') 
+    ? REAL_ISBNS[Math.floor(Math.random() * REAL_ISBNS.length)] 
+    : isbn;
+
   return {
     title,
     author,
@@ -20,7 +34,7 @@ const generateBook = (
     slug: slugify(title),
     language: 'English',
     description: `A phenomenal read about ${title.toLowerCase()} that will change your perspective. Essential for anyone interested in ${category}.`,
-    coverUrl: `https://covers.openlibrary.org/b/isbn/${isbn}-L.jpg`,
+    coverUrl: `https://covers.openlibrary.org/b/isbn/${displayIsbn}-L.jpg`,
     price,
     originalPrice,
     discount: ds,
