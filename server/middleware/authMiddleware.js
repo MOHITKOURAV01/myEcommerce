@@ -17,6 +17,11 @@ try {
 
 // Protect routes — require valid access token
 const protect = asyncHandler(async (req, res, next) => {
+  if (process.env.USE_MOCK_DATA === 'true') {
+    req.user = { _id: 'mock_mohit_123', name: 'Mohit Curator', role: 'user', email: 'mohit@booksmart.demo' };
+    return next();
+  }
+
   let token;
 
   if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
