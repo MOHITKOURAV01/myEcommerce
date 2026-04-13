@@ -80,10 +80,12 @@ const userSchema = new mongoose.Schema({
 });
 
 // Hash password before save
-userSchema.pre('save', async function() {
-  if (!this.isModified('password')) return;
+userSchema.pre('save', async function(next) {
+  // Only hash if password is modified AND exists (skip OAuth users)
+  if (!this.isModified('password') || !this.password) return next ? next() : null;
   const salt = await bcrypt.genSalt(12);
   this.password = await bcrypt.hash(this.password, salt);
+  if (next) next();
 });
 
 // Compare password method
