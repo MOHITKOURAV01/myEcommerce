@@ -93,8 +93,8 @@ export default function Checkout() {
 
   const subtotal = totals?.subtotal || 0;
   const discount = totals?.discount || 0;
-  const shipping = subtotal > 1000 || subtotal === 0 ? 0 : 99;
-  const tax = Math.round(subtotal * 0.05);
+  const shipping = subtotal > 499 || subtotal === 0 ? 0 : 49;
+  const tax = Math.round(subtotal * 0.18);
   const grandTotal = subtotal - discount + shipping + tax;
 
   const handleLocateMe = () => {
@@ -441,10 +441,10 @@ export default function Checkout() {
                       <span className="text-xs font-black text-cream/40 uppercase tracking-widest">Relic Shipping</span>
                       <span className="text-lg font-black text-cream">{shipping === 0 ? 'FREE' : formatPrice(shipping)}</span>
                    </div>
-                   <div className="flex justify-between items-center">
-                      <span className="text-xs font-black text-cream/40 uppercase tracking-widest">Imperial Tax (5%)</span>
-                      <span className="text-lg font-black text-cream">{formatPrice(tax)}</span>
-                   </div>
+                    <div className="flex justify-between items-center">
+                       <span className="text-xs font-black text-cream/40 uppercase tracking-widest">Empire Tax (18%)</span>
+                       <span className="text-lg font-black text-cream">{formatPrice(tax) || 0}</span>
+                    </div>
                 </div>
               </div>
 

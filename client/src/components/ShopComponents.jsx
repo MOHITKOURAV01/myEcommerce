@@ -9,7 +9,7 @@ import { StarRating } from './InteractiveUI';
 
 // --- BookCard3D.jsx ---
 export const BookCard3D = ({ book, view = 'grid', onQuickView }) => {
-    const { addToCart } = useCart();
+    const { addToCart, openDrawer } = useCart();
     const { isInWishlist, toggleWishlist } = useWishlist();
     const isWished = isInWishlist(book._id);
     const navigate = useNavigate();
@@ -207,7 +207,7 @@ export const CartDrawer = () => {
         navigate(path);
     };
 
-    const shipping = totals.subtotal > 1000 || totals.subtotal === 0 ? 0 : 99;
+    const shipping = totals.subtotal > 499 || totals.subtotal === 0 ? 0 : 49;
 
     return (
         <AnimatePresence>

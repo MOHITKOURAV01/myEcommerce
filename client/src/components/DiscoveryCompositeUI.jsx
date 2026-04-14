@@ -81,7 +81,7 @@ export const BookReviews = ({ reviews = [], rating, totalReviews }) => {
                             >
                                 <div className="flex-between" style={{ marginBottom: '10px' }}>
                                     <div className="flex" style={{ alignItems: 'center', gap: '10px' }}>
-                                        <div style={{ width: '32px', height: '32px', background: 'var(--terra)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyCenter: 'center', fontWeight: 900 }}>{r.user.name[0]}</div>
+                                        <div style={{ width: '32px', height: '32px', background: 'var(--terra)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900 }}>{r.user.name[0]}</div>
                                         <span style={{ fontWeight: 800 }}>{r.user.name}</span>
                                     </div>
                                     <span style={{ fontSize: '12px', opacity: 0.5 }}>{formatDate(r.createdAt)}</span>
@@ -110,7 +110,7 @@ export const RelatedBooks = ({ currentBookId }) => {
             } catch (err) {
                 console.error(err);
             } finally {
-                setIsLoading(true);
+                setIsLoading(false);
             }
         };
         fetchSimilar();
