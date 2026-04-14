@@ -123,7 +123,9 @@ export const AuthProvider = ({ children }) => {
             userData = data.data?.user || data.user;
             accessToken = data.data?.accessToken || data.accessToken;
             expiresIn = data.data?.expiresIn || data.expiresIn;
-            // Set access token in api.js
+        }
+        
+        if (accessToken) {
             setAccessToken(accessToken);
         }
         
