@@ -191,20 +191,37 @@ const deleteBook = asyncHandler(async (req, res) => {
 // @route   POST /api/books/seed
 // @access  Public (dev only)
 const seedBooks = asyncHandler(async (req, res) => {
-  if (process.env.NODE_ENV === 'production') {
+  if (process.env.NODE_ENV === 'production' && req.query.force !== 'true') {
     res.status(403);
-    throw new Error('Seeding is disabled in production');
+    throw new Error('Seeding is disabled in production (use ?force=true to override)');
   }
 
   const seedData = require('../data/seedData');
   await Book.deleteMany({});
+  await Category.deleteMany({});
+
+  // 1. Establish Categories
+  const categoryNames = [...new Set(seedData.map(b => b.category))];
+  const categoryMap = {};
+  for (const name of categoryNames) {
+    const cat = await Category.create({ 
+      name: name.charAt(0).toUpperCase() + name.slice(1),
+      slug: name.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]+/g, '')
+    });
+    categoryMap[name] = cat._id;
+  }
+
+  // 2. Map & Seed Books
+  const booksToInsert = seedData.map(book => ({
+    ...book,
+    category: categoryMap[book.category]
+  }));
   
-  // The covers are already fast URLs like 'https://covers.openlibrary.org/b/isbn/...-L.jpg'
-  const books = await Book.insertMany(seedData);
+  const books = await Book.insertMany(booksToInsert);
 
   res.status(201).json({
     success: true,
-    message: `Seeded ${books.length} books`,
+    message: `Archival Seeding SUCCESS! 🏺 ${books.length} relics cataloged.`,
     count: books.length,
   });
 });
