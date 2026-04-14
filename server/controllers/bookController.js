@@ -79,21 +79,59 @@ const getBestsellers = asyncHandler(async (req, res) => {
   res.status(200).json({ success: true, count: books.length, data: books });
 });
 
-const searchBooks = asyncHandler(async (req, res) => {
-  const features = new ApiFeatures(Book.find(), req.query)
-    .search()
-    .filter()
-    .sort()
-    .paginate();
+const { searchOpenLibrary } = require('../utils/openLibrary');
 
-  const total = await Book.countDocuments(features.filters);
-  const books = await features.query.populate('category', 'name slug');
+// ... [existing imports]
+
+// @desc    Search books (Local + Global)
+// @route   GET /api/books/search
+// @access  Public
+const searchBooks = asyncHandler(async (req, res) => {
+  const searchTerm = req.query.q || req.query.search;
+  let localBooks = [];
+  let globalBooks = [];
+  let total = 0;
+
+  // 1. Search Local (DB or Mocks)
+  if (process.env.USE_MOCK_DATA === 'true' && process.env.NODE_ENV !== 'test') {
+      if (searchTerm) {
+          const regex = new RegExp(searchTerm, 'i');
+          localBooks = mockBooks.filter(b => regex.test(b.title) || regex.test(b.author));
+      } else {
+          localBooks = mockBooks.slice(0, 12);
+      }
+      total = localBooks.length;
+  } else {
+      const features = new ApiFeatures(Book.find(), req.query)
+        .search()
+        .filter()
+        .sort()
+        .paginate();
+      localBooks = await features.query.populate('category', 'name slug');
+      total = await Book.countDocuments(features.filters);
+  }
+
+  // 2. Search Global (Open Library) if requested
+  if (searchTerm && req.query.global === 'true') {
+      try {
+          globalBooks = await searchOpenLibrary(searchTerm, 12);
+          // Filter out duplicates if already in local
+          const localIsbns = new Set(localBooks.map(b => b.isbn));
+          globalBooks = globalBooks.filter(b => !localIsbns.has(b.isbn));
+      } catch (e) {
+          console.error('External Search Failed: 🏺', e.message);
+      }
+  }
+
+  const combined = [...localBooks, ...globalBooks];
 
   res.status(200).json({
     success: true,
-    total,
-    count: books.length,
-    data: books,
+    total: total + globalBooks.length,
+    count: combined.length,
+    localCount: localBooks.length,
+    globalCount: globalBooks.length,
+    data: combined,
   });
 });
 

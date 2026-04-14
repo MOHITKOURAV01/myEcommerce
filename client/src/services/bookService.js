@@ -21,8 +21,8 @@ const bookService = {
         return data;
     },
 
-    search: async (query) => {
-        const { data } = await api.get(`/books/search?q=${query}`);
+    search: async (params = {}) => {
+        const { data } = await api.get('/books/search', { params });
         return data;
     },
 

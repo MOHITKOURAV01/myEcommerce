@@ -132,11 +132,17 @@ export default function Discover({ setModalBook }) {
       price: 2500,
       minRating: 0,
       inStock: false,
-      search: params.get('q') || ''
+      search: params.get('q') || '',
+      isGlobal: params.get('global') === 'true'
     };
   });
 
-  const [sort, setSort] = useState('-createdAt');
+  // For global search, we fetch from the server; for local, we use memory
+  const { books: serverBooks, loading: serverLoading } = useBooks(
+    filters.isGlobal && filters.search ? { q: filters.search, global: true } : {}, 
+    [filters.isGlobal, filters.search]
+  );
+  const { books: localBooks, loading: localLoading } = useBooks(); // Load initial set for categories/sidebar
   const [viewMode, setViewMode] = useState('grid');
   const [page, setPage] = useState(1);
   const itemsPerPage = 12;
@@ -159,59 +165,54 @@ export default function Discover({ setModalBook }) {
 
   // Derived Options for filter counts etc
   const availableOptions = useMemo(() => {
-    // Handle both cases: category as string or category as object { name, slug }
-    const catList = books.map(b => typeof b.category === 'object' ? b.category.name : b.category);
+    const catList = localBooks.map(b => typeof b.category === 'object' ? b.category.name : b.category);
     const categories = [...new Set(catList)].filter(Boolean);
     return { categories };
-  }, [books]);
+  }, [localBooks]);
 
   // Filter & Sort Logic
   const processedBooks = useMemo(() => {
-    let result = [...books];
+    let result = (filters.isGlobal && filters.search) ? [...serverBooks] : [...localBooks];
 
-    if (filters.category) {
-      result = result.filter(b => {
-        const catValue = typeof b.category === 'object' ? b.category.name : b.category;
-        return catValue === filters.category;
-      });
+    if (!filters.isGlobal) {
+        if (filters.category) {
+          result = result.filter(b => {
+            const catValue = typeof b.category === 'object' ? b.category.name : b.category;
+            return catValue === filters.category;
+          });
+        }
+        if (filters.mood) result = result.filter(b => b.moods?.includes(filters.mood));
+        if (filters.problem) result = result.filter(b => b.problems?.includes(filters.problem));
+        if (filters.path) result = result.filter(b => b.readingPaths?.includes(filters.path));
+        
+        if (filters.search) {
+            const q = filters.search.toLowerCase();
+            result = result.filter(b => 
+                b.title.toLowerCase().includes(q) || 
+                b.author.toLowerCase().includes(q)
+            );
+        }
     }
-    if (filters.mood) result = result.filter(b => b.moods?.includes(filters.mood));
-    if (filters.problem) result = result.filter(b => b.problems?.includes(filters.problem));
-    if (filters.path) result = result.filter(b => b.readingPaths?.includes(filters.path));
-    if (filters.language) result = result.filter(b => b.language === filters.language);
     
-    if (filters.search) {
-        const q = filters.search.toLowerCase();
-        result = result.filter(b => 
-            b.title.toLowerCase().includes(q) || 
-            b.author.toLowerCase().includes(q) ||
-            b.description?.toLowerCase().includes(q)
-        );
-    }
-    
-    result = result.filter(b => b.price <= filters.price);
-    if (filters.minRating > 0) result = result.filter(b => b.rating >= filters.minRating);
-    if (filters.inStock) result = result.filter(b => b.stock > 0);
-
     // Sort
     if (sort === '-createdAt') result.sort((a,b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
     if (sort === 'price') result.sort((a,b) => a.price - b.price);
     if (sort === '-price') result.sort((a,b) => b.price - a.price);
     if (sort === '-rating') result.sort((a,b) => b.rating - a.rating);
-    if (sort === 'trending') result.sort((a,b) => (b.trending ? 1 : 0) - (a.trending ? 1 : 0));
 
     return result;
-  }, [books, filters, sort]);
+  }, [localBooks, serverBooks, filters, sort]);
 
   const paginatedBooks = processedBooks.slice((page - 1) * itemsPerPage, page * itemsPerPage);
   const totalPages = Math.ceil(processedBooks.length / itemsPerPage);
 
   const clearFilters = () => {
-    setFilters({ category: '', mood: '', problem: '', path: '', language: '', price: 2500, minRating: 0, inStock: false, search: '' });
+    setFilters({ category: '', mood: '', problem: '', path: '', language: '', price: 2500, minRating: 0, inStock: false, search: '', isGlobal: false });
     setPage(1);
   };
 
-  if (loading) return <LoadingSpinner text="Dusting off the archives..." />;
+  const isLoading = (filters.isGlobal && filters.search) ? serverLoading : localLoading;
+  if (isLoading && processedBooks.length === 0) return <LoadingSpinner text="Consulting the Great Archives..." />;
 
   const activeBadges = Object.entries(filters).filter(([k, v]) => {
      if(k === 'price' && v === 2500) return false;
@@ -227,25 +228,39 @@ export default function Discover({ setModalBook }) {
       <div className="flex flex-col lg:flex-row justify-between items-end mb-16 border-b-8 border-wood/30 pb-12 gap-8">
         <div className="max-w-xl">
            <div className="inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest mb-6 border border-primary/20">
-              <span className="w-1.5 h-1.5 bg-primary rounded-full animate-pulse shadow-[0_0_10px_rgba(200,96,58,0.8)]" /> Discovery Engine v2.0
+              <span className="w-1.5 h-1.5 bg-primary rounded-full animate-pulse shadow-[0_0_10px_rgba(200,96,58,0.8)]" /> Discovery Engine v3.0
            </div>
            <h1 className="font-fredoka text-6xl md:text-8xl text-cream leading-[0.8] tracking-tighter">
              The <span className="text-primary italic">Great</span> <br/>Catalog
            </h1>
-           <p className="text-textMuted mt-6 font-medium max-w-sm leading-relaxed">Sift through centuries of encoded wisdom and modern insights.</p>
+           <p className="text-textMuted mt-6 font-medium max-w-sm leading-relaxed">Sift through centuries of encoded wisdom. Now connected to the Global Ancient Archives (20M+ Titles).</p>
         </div>
 
         <div className="flex flex-col sm:flex-row gap-4 mt-8 lg:mt-0 w-full lg:w-auto items-center">
             {/* SEARCH BAR (Large screens only) */}
-            <div className="hidden lg:block relative w-[350px]">
-               <FaSearch className="absolute left-5 top-1/2 -translate-y-1/2 text-primary/50" />
-               <input 
-                 type="text" 
-                 placeholder="Search by title, author, vibe..." 
-                 className="clay-input w-full pl-14 !py-4 rounded-[20px] !bg-interior-2 border-borderWarm focus:border-primary/50"
-                 value={filters.search}
-                 onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
-               />
+            <div className="hidden lg:flex flex-col gap-4 relative w-[400px]">
+               <div className="relative">
+                   <FaSearch className="absolute left-5 top-1/2 -translate-y-1/2 text-primary/50 shrink-0" />
+                   <input 
+                     type="text" 
+                     placeholder={filters.isGlobal ? "Search 20 Million ancient archives..." : "Search local curated collection..."}
+                     className={`clay-input w-full pl-14 !py-4 rounded-[20px] !bg-interior-2 border-2 transition-all ${filters.isGlobal ? 'border-primary/40 shadow-[0_0_20px_rgba(200,96,58,0.1)]' : 'border-borderWarm hover:border-primary/20'}`}
+                     value={filters.search}
+                     onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
+                   />
+               </div>
+               {/* GLOBAL SEARCH TOGGLE */}
+               <div 
+                 onClick={() => setFilters(prev => ({ ...prev, isGlobal: !prev.isGlobal }))}
+                 className="flex items-center gap-4 cursor-pointer select-none group px-2"
+               >
+                   <div className={`w-10 h-5 rounded-full relative transition-all duration-500 p-1 ${filters.isGlobal ? 'bg-primary' : 'bg-interior-2 border border-borderWarm'}`}>
+                       <div className={`w-3 h-3 rounded-full bg-white transition-all duration-500 shadow-md ${filters.isGlobal ? 'translate-x-5' : 'translate-x-0'}`} />
+                   </div>
+                   <span className={`text-[9px] font-black uppercase tracking-widest transition-colors ${filters.isGlobal ? 'text-primary' : 'text-textMuted group-hover:text-cream'}`}>
+                       {filters.isGlobal ? 'CONNECTED TO ANCIENT ARCHIVES (20M+)' : 'SEARCH GLOBAL ARCHIVES?'}
+                   </span>
+               </div>
             </div>
 
             <div className="flex gap-4 items-center w-full sm:w-auto">
@@ -296,11 +311,11 @@ export default function Discover({ setModalBook }) {
                           animate={{ opacity: 1, scale: 1 }}
                           exit={{ opacity: 0, scale: 0.8 }}
                           key={key} 
-                          className="flex items-center gap-2 bg-interior border border-borderWarm px-4 py-2 rounded-full shadow-sm"
+                          className={`flex items-center gap-2 bg-interior border px-4 py-2 rounded-full shadow-sm ${key === 'isGlobal' ? 'border-primary bg-primary/5' : 'border-borderWarm'}`}
                         >
-                            <span className="text-textMuted uppercase text-[9px] font-black tracking-widest">{key}:</span>
-                            <span className="font-bold text-mint text-xs uppercase">{val}</span>
-                            <button onClick={() => setFilters(p => ({...p, [key]: key === 'price' ? 2500 : key === 'minRating' ? 0 : ''}))} className="text-primary hover:scale-125 transition-transform"><FaTimes size={10} /></button>
+                            <span className="text-textMuted uppercase text-[9px] font-black tracking-widest">{key === 'isGlobal' ? 'Source' : key}:</span>
+                            <span className={`font-bold text-xs uppercase ${key === 'isGlobal' ? 'text-primary' : 'text-mint'}`}>{key === 'isGlobal' ? 'Ancient Archives' : val}</span>
+                            <button onClick={() => setFilters(p => ({...p, [key]: key === 'price' ? 2500 : key === 'minRating' ? 0 : key === 'isGlobal' ? false : ''}))} className="text-primary hover:scale-125 transition-transform ml-1"><FaTimes size={10} /></button>
                         </motion.div>
                     ))}
                 </AnimatePresence>
