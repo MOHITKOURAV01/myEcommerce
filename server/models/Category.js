@@ -45,7 +45,7 @@ const categorySchema = new mongoose.Schema({
 categorySchema.index({ parent: 1 });
 
 // Auto-generate slug
-categorySchema.pre('save', function(next) {
+categorySchema.pre('save', async function() {
   if (this.isModified('name') || !this.slug) {
     this.slug = this.name
       .toLowerCase()
@@ -54,7 +54,6 @@ categorySchema.pre('save', function(next) {
       .replace(/-+/g, '-')
       .trim();
   }
-  next();
 });
 
 // Virtual: subcategories
