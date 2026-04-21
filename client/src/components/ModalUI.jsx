@@ -196,18 +196,31 @@ export const AuthModal = ({ type = 'login', isOpen, onClose, onSwitch }) => {
     const handleGoogleSuccess = async (tokenResponse) => {
         setGoogleLoading(true);
         setError('');
+        
+        const fetchWithTimeout = async (url, options, timeout = 5000) => {
+            const controller = new AbortController();
+            const id = setTimeout(() => controller.abort(), timeout);
+            try {
+                const response = await fetch(url, { ...options, signal: controller.signal });
+                clearTimeout(id);
+                return response;
+            } catch (err) {
+                clearTimeout(id);
+                throw err;
+            }
+        };
+
         try {
-            // Option 1: Fetch user info directly (as currently implemented)
-            // But let's add a timeout and better error handling
-            const userInfoResponse = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+            // Fetch user info with timeout
+            const userInfoResponse = await fetchWithTimeout('https://www.googleapis.com/oauth2/v3/userinfo', {
                 headers: { Authorization: `Bearer ${tokenResponse.access_token}` },
             });
             
             if (!userInfoResponse.ok) throw new Error('Failed to get user info from Google');
             const userInfo = await userInfoResponse.json();
 
-            // Option 2: Pass to our backend
-            const response = await fetch(`${import.meta.env.VITE_API_URL}/auth/google-token`, {
+            // Pass to our backend with timeout
+            const response = await fetchWithTimeout(`${import.meta.env.VITE_API_URL}/auth/google-token`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -226,14 +239,13 @@ export const AuthModal = ({ type = 'login', isOpen, onClose, onSwitch }) => {
             }
 
             const data = await response.json();
-            // This updates context state
             await googleLogin(data);
             
             toast.success(`Welcome, ${data.user?.name?.split(' ')[0] || 'Member'}! 🎉`);
             onClose();
         } catch (err) {
-            console.error('Google Auth Error:', err);
-            setError(err.message || 'Google login failed. Please try again.');
+            console.error('Logout/Auth Error:', err);
+            setError(err.name === 'AbortError' ? 'Request timed out. Please try again.' : (err.message || 'Google login failed'));
         } finally {
             setGoogleLoading(false);
         }

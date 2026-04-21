@@ -9,7 +9,7 @@ const { apiLimiter, authLimiter } = require('./middleware/rateLimiter');
 
 const app = express();
 
-// Connect to Databases
+
 console.log('Mode:', process.env.NODE_ENV, 'Mock Data:', process.env.USE_MOCK_DATA);
 if (process.env.USE_MOCK_DATA !== 'true' && process.env.NODE_ENV !== 'test') {
   connectDB();

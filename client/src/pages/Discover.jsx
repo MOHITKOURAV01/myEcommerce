@@ -143,6 +143,7 @@ export default function Discover({ setModalBook }) {
     [filters.isGlobal, filters.search]
   );
   const { books: localBooks, loading: localLoading } = useBooks(); // Load initial set for categories/sidebar
+  const [sort, setSort] = useState('-createdAt');
   const [viewMode, setViewMode] = useState('grid');
   const [page, setPage] = useState(1);
   const itemsPerPage = 12;
@@ -236,60 +237,68 @@ export default function Discover({ setModalBook }) {
            <p className="text-textMuted mt-6 font-medium max-w-sm leading-relaxed">Sift through centuries of encoded wisdom. Now connected to the Global Ancient Archives (20M+ Titles).</p>
         </div>
 
-        <div className="flex flex-col sm:flex-row gap-4 mt-8 lg:mt-0 w-full lg:w-auto items-center">
-            {/* SEARCH BAR (Large screens only) */}
-            <div className="hidden lg:flex flex-col gap-4 relative w-[400px]">
-               <div className="relative">
-                   <FaSearch className="absolute left-5 top-1/2 -translate-y-1/2 text-primary/50 shrink-0" />
-                   <input 
-                     type="text" 
-                     placeholder={filters.isGlobal ? "Search 20 Million ancient archives..." : "Search local curated collection..."}
-                     className={`clay-input w-full pl-14 !py-4 rounded-[20px] !bg-interior-2 border-2 transition-all ${filters.isGlobal ? 'border-primary/40 shadow-[0_0_20px_rgba(200,96,58,0.1)]' : 'border-borderWarm hover:border-primary/20'}`}
-                     value={filters.search}
-                     onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
-                   />
-               </div>
-               {/* GLOBAL SEARCH TOGGLE */}
-               <div 
-                 onClick={() => setFilters(prev => ({ ...prev, isGlobal: !prev.isGlobal }))}
-                 className="flex items-center gap-4 cursor-pointer select-none group px-2"
-               >
-                   <div className={`w-10 h-5 rounded-full relative transition-all duration-500 p-1 ${filters.isGlobal ? 'bg-primary' : 'bg-interior-2 border border-borderWarm'}`}>
-                       <div className={`w-3 h-3 rounded-full bg-white transition-all duration-500 shadow-md ${filters.isGlobal ? 'translate-x-5' : 'translate-x-0'}`} />
-                   </div>
-                   <span className={`text-[9px] font-black uppercase tracking-widest transition-colors ${filters.isGlobal ? 'text-primary' : 'text-textMuted group-hover:text-cream'}`}>
-                       {filters.isGlobal ? 'CONNECTED TO ANCIENT ARCHIVES (20M+)' : 'SEARCH GLOBAL ARCHIVES?'}
-                   </span>
-               </div>
+        <div className="flex flex-col lg:flex-row gap-8 items-center w-full lg:w-auto">
+            <div className="flex flex-col gap-6 w-full lg:w-[450px]">
+                {/* SEARCH BAR */}
+                <div className="relative group">
+                    <div className="absolute inset-0 bg-primary/5 blur-2xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
+                    <FaSearch className="absolute left-6 top-1/2 -translate-y-1/2 text-primary/40 group-focus-within:text-primary transition-colors duration-500" />
+                    <input 
+                      type="text" 
+                      placeholder={filters.isGlobal ? "Querying 20 Million ancient records..." : "Search local curated collection..."}
+                      className={`clay-input w-full pl-16 pr-6 !py-5 rounded-[24px] !bg-interior-2 border-2 transition-all duration-500 shadow-xl ${filters.isGlobal ? 'border-primary/50 shadow-[0_0_40px_rgba(200,96,58,0.1)]' : 'border-borderWarm hover:border-primary/20'}`}
+                      value={filters.search}
+                      onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
+                    />
+                </div>
+
+                {/* ENHANCED GLOBAL SEARCH TOGGLE */}
+                <div 
+                  onClick={() => setFilters(prev => ({ ...prev, isGlobal: !prev.isGlobal }))}
+                  className={`flex items-center gap-5 cursor-pointer select-none group p-4 rounded-2xl border-2 transition-all duration-500 ${filters.isGlobal ? 'bg-primary/5 border-primary/30 shadow-inner' : 'bg-interior-2 border-borderWarm/30 hover:border-primary/20'}`}
+                >
+                    <div className={`w-12 h-6 rounded-full relative transition-all duration-500 p-1 ${filters.isGlobal ? 'bg-primary' : 'bg-interior-2 border border-borderWarm'}`}>
+                        <div className={`w-4 h-4 rounded-full bg-white transition-all duration-500 shadow-2xl ${filters.isGlobal ? 'translate-x-6' : 'translate-x-0'}`} />
+                    </div>
+                    <div className="flex flex-col">
+                        <span className={`text-[10px] font-black underline uppercase tracking-[0.2em] transition-colors ${filters.isGlobal ? 'text-primary' : 'text-textMuted group-hover:text-cream'}`}>
+                            {filters.isGlobal ? 'Connected to Ancient Archives' : 'Access Global Archives (20M+)'}
+                        </span>
+                        <span className="text-[8px] text-textMuted/60 font-medium uppercase tracking-widest mt-1 text-left">
+                            {filters.isGlobal ? 'Bypassing local inventory constraints' : 'Unlock the vault of the entire Open Library'}
+                        </span>
+                    </div>
+                    {filters.isGlobal && <span className="ml-auto w-2 h-2 bg-primary rounded-full animate-ping" />}
+                </div>
             </div>
 
-            <div className="flex gap-4 items-center w-full sm:w-auto">
-               <select 
-                 value={sort} 
-                 onChange={(e) => setSort(e.target.value)}
-                 className="flex-1 sm:flex-none bg-interior-2 border-2 border-borderWarm text-cream font-black uppercase tracking-widest text-[10px] rounded-[20px] px-8 py-4 outline-none hover:border-primary transition-all cursor-pointer shadow-lg"
-               >
-                   <option value="-createdAt">Newest Arrivals</option>
-                   <option value="trending">Trending Now</option>
-                   <option value="-rating">Highest Rated</option>
-                   <option value="price">Price: Low → High</option>
-                   <option value="-price">Price: High → Low</option>
-               </select>
+            <div className="flex gap-4 items-center w-full lg:w-auto">
+                <select 
+                  value={sort} 
+                  onChange={(e) => setSort(e.target.value)}
+                  className="flex-1 lg:flex-none bg-interior-2 border-2 border-borderWarm text-cream font-black uppercase tracking-widest text-[10px] rounded-[20px] px-8 py-4 outline-none hover:border-primary transition-all cursor-pointer shadow-lg"
+                >
+                    <option value="-createdAt">Newest Arrivals</option>
+                    <option value="trending">Trending Now</option>
+                    <option value="-rating">Highest Rated</option>
+                    <option value="price">Price: Low → High</option>
+                    <option value="-price">Price: High → Low</option>
+                </select>
 
-               <div className="flex bg-interior-2 border-2 border-borderWarm rounded-[20px] p-1.5 shadow-xl">
-                   <button 
-                     onClick={()=>setViewMode('grid')} 
-                     className={`w-11 h-11 flex-center rounded-xl transition-all duration-300 ${viewMode==='grid'?'bg-primary text-night shadow-lg shadow-primary/30 scale-105':'text-textMuted hover:text-cream'}`}
-                   >
-                     <FaThLarge size={18} />
-                   </button>
-                   <button 
-                     onClick={()=>setViewMode('list')} 
-                     className={`w-11 h-11 flex-center rounded-xl transition-all duration-300 ${viewMode==='list'?'bg-primary text-night shadow-lg shadow-primary/30 scale-105':'text-textMuted hover:text-cream'}`}
-                   >
-                     <FaList size={18} />
-                   </button>
-               </div>
+                <div className="flex bg-interior-2 border-2 border-borderWarm rounded-[20px] p-1.5 shadow-xl">
+                    <button 
+                      onClick={()=>setViewMode('grid')} 
+                      className={`w-11 h-11 flex-center rounded-xl transition-all duration-300 ${viewMode==='grid'?'bg-primary text-night shadow-lg shadow-primary/30 scale-105':'text-textMuted hover:text-cream'}`}
+                    >
+                      <FaThLarge size={18} />
+                    </button>
+                    <button 
+                      onClick={()=>setViewMode('list')} 
+                      className={`w-11 h-11 flex-center rounded-xl transition-all duration-300 ${viewMode==='list'?'bg-primary text-night shadow-lg shadow-primary/30 scale-105':'text-textMuted hover:text-cream'}`}
+                    >
+                      <FaList size={18} />
+                    </button>
+                </div>
             </div>
         </div>
       </div>
