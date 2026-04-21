@@ -228,11 +228,13 @@ const deleteBook = asyncHandler(async (req, res) => {
 // @desc    Seed database
 // @route   POST /api/books/seed
 // @access  Public (dev only)
-const seedBooks = asyncHandler(async (req, res) => {
+const seedBooks = async (req, res, next) => {
   try {
     if (process.env.NODE_ENV === 'production' && req.query.force !== 'true') {
-      res.status(403);
-      throw new Error('Seeding is disabled in production (use ?force=true to override)');
+      return res.status(403).json({
+        success: false,
+        message: 'Seeding is disabled in production (use ?force=true to override)'
+      });
     }
 
     const booksToSeed = require('../data/seedData');
@@ -265,9 +267,9 @@ const seedBooks = asyncHandler(async (req, res) => {
     });
   } catch (error) {
     console.error('SEEDING ERROR:', error);
-    throw error;
+    next(error);
   }
-});
+};
 
 module.exports = {
   getBooks,
