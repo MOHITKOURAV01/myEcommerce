@@ -229,39 +229,44 @@ const deleteBook = asyncHandler(async (req, res) => {
 // @route   POST /api/books/seed
 // @access  Public (dev only)
 const seedBooks = asyncHandler(async (req, res) => {
-  if (process.env.NODE_ENV === 'production' && req.query.force !== 'true') {
-    res.status(403);
-    throw new Error('Seeding is disabled in production (use ?force=true to override)');
-  }
+  try {
+    if (process.env.NODE_ENV === 'production' && req.query.force !== 'true') {
+      res.status(403);
+      throw new Error('Seeding is disabled in production (use ?force=true to override)');
+    }
 
-  const seedData = require('../data/seedData');
-  await Book.deleteMany({});
-  await Category.deleteMany({});
+    const booksToSeed = require('../data/seedData');
+    await Book.deleteMany({});
+    await Category.deleteMany({});
 
-  // 1. Establish Categories
-  const categoryNames = [...new Set(seedData.map(b => b.category))];
-  const categoryMap = {};
-  for (const name of categoryNames) {
-    const cat = await Category.create({ 
-      name: name.charAt(0).toUpperCase() + name.slice(1),
-      slug: name.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]+/g, '')
+    // 1. Establish Categories
+    const categoryNames = [...new Set(booksToSeed.map(b => b.category))];
+    const categoryMap = {};
+    for (const name of categoryNames) {
+      const cat = await Category.create({ 
+        name: name.charAt(0).toUpperCase() + name.slice(1),
+        slug: name.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]+/g, '')
+      });
+      categoryMap[name] = cat._id;
+    }
+
+    // 2. Map & Seed Books
+    const booksToInsert = booksToSeed.map(book => ({
+      ...book,
+      category: categoryMap[book.category]
+    }));
+    
+    const books = await Book.insertMany(booksToInsert);
+
+    res.status(201).json({
+      success: true,
+      message: `Archival Seeding SUCCESS! 🏺 ${books.length} relics cataloged.`,
+      count: books.length,
     });
-    categoryMap[name] = cat._id;
+  } catch (error) {
+    console.error('SEEDING ERROR:', error);
+    throw error;
   }
-
-  // 2. Map & Seed Books
-  const booksToInsert = seedData.map(book => ({
-    ...book,
-    category: categoryMap[book.category]
-  }));
-  
-  const books = await Book.insertMany(booksToInsert);
-
-  res.status(201).json({
-    success: true,
-    message: `Archival Seeding SUCCESS! 🏺 ${books.length} relics cataloged.`,
-    count: books.length,
-  });
 });
 
 module.exports = {
