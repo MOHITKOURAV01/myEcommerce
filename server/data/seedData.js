@@ -1,5 +1,5 @@
 const REAL_ISBNS = [
-  '9780735211292', '9781455586691', '9780525559474', '9781612680194', 
+  '9780735211292', '9781455586691', '9780525559474', '9781612680194',
   '9780671027032', '9780070481718', '9780062315007', '9788173711466',
   '9781585424337', '9780735204553', '9780804139021', '9780008312831',
   '9780345472328', '9780062316097', '9780062457714', '9781544512266',
@@ -8,23 +8,24 @@ const REAL_ISBNS = [
 ];
 
 const generateBook = (
-  title, author, isbn, category, price, 
-  originalPrice, ds, moods, problems, 
+  title, author, isbn, category, price,
+  originalPrice, ds, moods, problems,
   paths, ft = false, bs = false, na = false, tr = false, rating = 4.5
 ) => {
   const encTitle = encodeURIComponent(title);
-  function slugify(text) { return text.toString().toLowerCase()
-    .replace(/\s+/g,'-')
-    .replace(/[^\w-]+/g,'')
-    .replace(/--+/g,'-')
-    .replace(/^-+/,'')
-    .replace(/-+$/,'');
+  function slugify(text) {
+    return text.toString().toLowerCase()
+      .replace(/\s+/g, '-')
+      .replace(/[^\w-]+/g, '')
+      .replace(/--+/g, '-')
+      .replace(/^-+/, '')
+      .replace(/-+$/, '');
   }
 
   // Use a real ISBN cover if this is a dummy ISBN to ensure images show up
-  const displayIsbn = isbn.startsWith('978100') 
-    ? REAL_ISBNS[Math.floor(Math.random() * REAL_ISBNS.length)] 
-    : isbn;
+  const displayIsbn = REAL_ISBNS.includes(isbn)
+    ? isbn
+    : REAL_ISBNS[Math.floor(Math.random() * REAL_ISBNS.length)];
 
   return {
     title,
@@ -86,19 +87,18 @@ const books = [
   generateBook('Awaken the Giant Within', 'Tony Robbins', '9780671791544', 'self-help', 549, 899, 39, ['Motivation'], ['Self-Doubt'], ['pro', 'student'], false, true, false, false, 4.7),
 ];
 
-// Dynamically generate the remaining 77 to reach exactly 100 books 
-// (We have 23, need 77 more to meet criteria of 100 total)
+// Dynamically generate the remaining to reach exactly 10,000 books
 const categoryMap = {
-  'self-help': 20,
-  'finance': 12,
-  'fiction': 10,
-  'biography': 10,
-  'productivity': 10,
-  'philosophy': 8,
-  'communication': 8,
-  'business': 8,
-  'psychology': 8,
-  'spirituality': 6
+  'self-help': 2000,
+  'finance': 1500,
+  'fiction': 1000,
+  'biography': 1000,
+  'productivity': 1000,
+  'philosophy': 800,
+  'communication': 800,
+  'business': 800,
+  'psychology': 600,
+  'spirituality': 500
 };
 
 // Deduct the counts from the initial 23 manually or dynamically
@@ -107,60 +107,52 @@ books.forEach(b => {
   currentCounts[b.category] = (currentCounts[b.category] || 0) + 1;
 });
 
-let dummyIsbnCounter = 9781000000000;
-const fillerMoods = ['Deep Focus', 'Calm Mind', 'Growth', 'Stories', 'Adventure', 'Motivation'];
-const fillerProblems = ['Stress', 'Anxiety', 'Poverty', 'Laziness', 'Distraction', 'Lost', 'Overthinking'];
-const fillerPaths = ['student', 'career', 'pro', 'beginner'];
+let dummyIsbnCounter = 9783000000000;
+const fillerMoods = ['Deep Focus', 'Calm Mind', 'Growth', 'Stories', 'Adventure', 'Motivation', 'Resilience', 'Clarity', 'Energy', 'Inspiration', 'Wisdom'];
+const fillerProblems = ['Stress', 'Anxiety', 'Poverty', 'Laziness', 'Distraction', 'Lost', 'Overthinking', 'Mediocrity', 'Chaos', 'Doubt'];
+const fillerPaths = ['student', 'career', 'pro', 'beginner', 'parent', 'entrepreneur', 'leader', 'artist'];
 
-const titles = [
-  "Mastering the Mind", "Wealth Dynamics", "The Silent Leader", "Beyond Happiness", "Future Driven",
-  "Habit Loops", "The Resilient Soul", "Digital Ascendance", "Echoes of Time", "Stoic Paths",
-  "Conversational Mastery", "The Agile Business", "Subconscious Blueprints", "Zen Focus", "Financial Fortress",
-  "The Startup Code", "Emotional Agility", "The Art of Listening", "Chronicles of Earth", "Pioneers of Tech",
-  "Minimalist Living", "The Wealth Blueprint", "Unbreakable Will", "The Modern Philosopher", "Data Driven Decisions",
-  "The Compassionate Mind", "Persuasion Methods", "Infinite Growth", "The Focused Life", "Wanderer's Tale",
-  "Inventing the Future", "The Stoic Joy", "Cashflow Secrets", "The Empathy Advantage", "Limitless Energy",
-  "The Organized Mind", "Corporate Titans", "The Mindfulness Guide", "Words That Win", "The Success Equation",
-  "The Happy Brain", "Startup Scaling", "The Assertive Speaker", "The Deep Work Ethic", "Wealth Cultivation",
-  "The Peaceful Warrior", "The Leadership Paradox", "Financial Independence", "The Neuroscience of Habit", "The Charisma Code",
-  "The Creative Spark", "The Productivity Ninja", "The Stoic Mindset", "The Emotional Bank Account", "The Negotiation Playbook",
-  "The Resilient Mind", "The Wealth Planner", "The Business Thinker", "The Awakened Soul", "The Communication Gap",
-  "The Philosophy of Success", "The Agile Mind", "The Personal Finance Guide", "The Innovation Strategy", "The Emotional Leader",
-  "The Startup Mentality", "The Focused Entrepreneur", "The Philosophy of Wealth", "The Communication Masterclass", "The Resilient Entrepreneur",
-  "The Wealth Formula", "The Awakened Leader", "The Emotional Entrepreneur", "The Success Blueprint", "The Agile Leader", "The Resilient Leader", "The Awakened Entrepreneur"
+const baseTitles = [
+  "Mastering", "Wealth", "The Silent", "Beyond", "Future", "Habit", "The Resilient", "Digital", "Echoes", "Stoic",
+  "Conversational", "Agile", "Blueprints", "Zen", "Financial", "Startup", "Emotional", "Art of", "Chronicles", "Pioneers",
+  "Minimalist", "Unbreakable", "Modern", "Data", "Compassionate", "Persuasion", "Infinite", "Focused", "Wanderer",
+  "Inventing", "Joy", "Cashflow", "Empathy", "Limitless", "Organized", "Corporate", "Mindfulness", "Words", "Equation",
+  "Brain", "Scaling", "Assertive", "Ethic", "Cultivation", "Warrior", "Paradox", "Independence", "Neuroscience", "Code"
 ];
 
-let titleIdx = 0;
+const suffixes = [
+  "Secrets", "Code", "Dynamics", "Paths", "Victory", "Wisdom", "Manual", "Guide", "Legacy", "Protocol",
+  "Empire", "Foundations", "Masterclass", "Paradigm", "Shift", "Evolution", "Revolution", "Hacks", "Engine", "Blueprint"
+];
 
 for (const [cat, targetCount] of Object.entries(categoryMap)) {
   const current = currentCounts[cat] || 0;
   const needed = targetCount - current;
   
   for (let i = 0; i < needed; i++) {
-    const titleVal = titles[titleIdx] || `${cat.charAt(0).toUpperCase() + cat.slice(1)} Mastery Vol. ${i+1}`;
-    titleIdx++;
+    const titleVal = `${baseTitles[Math.floor(Math.random() * baseTitles.length)]} ${cat} ${suffixes[Math.floor(Math.random() * suffixes.length)]} #${i + current + 1}`;
     
     books.push(generateBook(
       titleVal, 
-      `Author ${Math.floor(Math.random() * 100)}`, 
+      `Author ${Math.floor(Math.random() * 5000)}`, 
       (dummyIsbnCounter++).toString(), 
       cat, 
-      Math.floor(Math.random() * 500) + 150, 
-      Math.floor(Math.random() * 500) + 650, 
+      Math.floor(Math.random() * 800) + 250, 
+      Math.floor(Math.random() * 500) + 1200, 
       30, 
-      [fillerMoods[Math.floor(Math.random() * fillerMoods.length)]], 
+      [fillerMoods[Math.floor(Math.random() * fillerMoods.length)], fillerMoods[Math.floor(Math.random() * fillerMoods.length)]], 
       [fillerProblems[Math.floor(Math.random() * fillerProblems.length)]], 
       [fillerPaths[Math.floor(Math.random() * fillerPaths.length)]],
-      Math.random() > 0.8, 
-      Math.random() > 0.5, 
+      Math.random() > 0.9, 
       Math.random() > 0.6, 
       Math.random() > 0.7, 
-      parseFloat((Math.random() * (5 - 3.5) + 3.5).toFixed(1))
+      Math.random() > 0.8, 
+      parseFloat((Math.random() * (5 - 3.0) + 3.0).toFixed(1))
     ));
   }
 }
 
-// Slice to exactly 100 if we slightly overshot
-const exact100Books = books.slice(0, 100);
+// Slice to exactly 10,000 if we slightly overshot
+const exact10000Books = books.slice(0, 10000);
 
-module.exports = exact100Books;
+module.exports = exact10000Books;
