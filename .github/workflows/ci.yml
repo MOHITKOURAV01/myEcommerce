@@ -51,7 +51,7 @@ jobs:
       - name: Run Unit Tests
         run: cd server && npm run test:unit -- --coverage
       - name: Upload coverage
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v6
         with:
           directory: server/coverage
 
