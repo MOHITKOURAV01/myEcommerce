@@ -20,7 +20,7 @@ jobs:
       - name: Format Check Client
         run: cd client && npx prettier --check "src/**/*.{js,jsx,css}"
       - name: Post Results
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         if: always()
         with:
           script: |
